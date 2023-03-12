@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+group 'com.shuzijun'
+version '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'com.alibaba.fastjson2:fastjson2:2.0.24'
+    api "com.squareup.okhttp3:okhttp:4.10.0"
+    api "commons-io:commons-io:2.11.0"
+    api 'org.apache.commons:commons-lang3:3.9'
+
+    testImplementation "junit:junit:4.13.2"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.8.2"
+}
+
+test {
+    useJUnitPlatform()
+}

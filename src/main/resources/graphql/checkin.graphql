@@ -1,0 +1,8 @@
+mutation checkin {
+    checkin {
+        checkedIn
+        ok
+        error
+        __typename
+    }
+}

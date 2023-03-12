@@ -1,0 +1,32 @@
+query userStatusGlobal {
+    userStatus {
+        isSignedIn
+        isAdmin
+        isStaff
+        isSuperuser
+        isTranslator
+        isVerified
+        isPhoneVerified
+        isWechatVerified
+        checkedInToday
+        username
+        realName
+        userSlug
+        groups
+        avatar
+        optedIn
+        requestRegion
+        region
+        socketToken
+        activeSessionId
+        permissions
+        completedFeatureGuides
+        useTranslation
+        accountStatus {
+            isFrozen
+            inactiveAfter
+            __typename
+        }
+        __typename
+    }
+}

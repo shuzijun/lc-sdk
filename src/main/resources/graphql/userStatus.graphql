@@ -1,0 +1,70 @@
+query globalData {
+    feature {
+        questionTranslation
+        subscription
+        signUp
+        discuss
+        mockInterview
+        contest
+        store
+        chinaProblemDiscuss
+        socialProviders
+        studentFooter
+        enableChannels
+        dangerZone
+        enableSharedWorker
+        enableRecaptchaV3
+        enableDebugger
+        enableDebuggerPremium
+        enableAutocomplete
+        enableAutocompletePremium
+        enableAllQuestionsRaw
+        autocompleteLanguages
+        enableIndiaPricing
+        enableReferralDiscount
+        maxTimeTravelTicketCount
+        enableStoreShippingForm
+        enableCodingChallengeV2
+        __typename
+    }
+    streakCounter {
+        streakCount
+        daysSkipped
+        currentDayCompleted
+        __typename
+    }
+    currentTimestamp
+    userStatus {
+        isSignedIn
+        isAdmin
+        isStaff
+        isSuperuser
+        isMockUser
+        isTranslator
+        isPremium
+        isVerified
+        checkedInToday
+        username
+        realName
+        avatar
+        optedIn
+        requestRegion
+        region
+        activeSessionId
+        permissions
+        notificationStatus {
+            lastModified
+            numUnread
+            __typename
+        }
+        completedFeatureGuides
+        __typename
+    }
+    siteRegion
+    chinaHost
+    websocketUrl
+    recaptchaKey
+    recaptchaKeyV2
+    sitewideAnnouncement
+    userCountryCode
+}
