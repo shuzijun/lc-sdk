@@ -42,16 +42,16 @@ public class QuestionView {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getFormTitle() {
         StringBuffer sb = new StringBuffer();
         if (StringUtils.isNotBlank(frontendQuestionId)) {
             sb.append("[").append(frontendQuestionId).append("]");
         }
         return sb.append(title).toString();
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public String getQuestionId() {
@@ -66,7 +66,7 @@ public class QuestionView {
         return level;
     }
 
-    @JSONField(name ="difficulty")
+    @JSONField(name = "difficulty")
     public void setLevel(String difficulty) {
         if (difficulty == null) {
             this.level = 0;
@@ -88,7 +88,7 @@ public class QuestionView {
     }
 
     public void setStatus(String status) {
-        if (status != null){
+        if (status != null) {
             status = status.toLowerCase();
         }
         this.status = status;
@@ -111,16 +111,16 @@ public class QuestionView {
         this.frontendQuestionId = frontendQuestionId;
     }
 
+    public Double getAcceptance() {
+        return acceptance;
+    }
+
     @JSONField(name = "acRate")
     public void setAcceptance(Double acceptance) {
         if (acceptance != null && acceptance.doubleValue() > 1) {
             acceptance = acceptance / 100;
         }
         this.acceptance = acceptance;
-    }
-
-    public Double getAcceptance() {
-        return acceptance;
     }
 
     public Double getFrequency() {

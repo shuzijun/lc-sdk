@@ -58,9 +58,9 @@ public class DefaultExecutoHttp implements ExecutorHttp {
     public HttpResponse executeGet(HttpRequest httpRequest) throws LcException {
         try {
             Response response = okHttpClient.newCall(buildRequest(httpRequest)).execute();
-            if ( response.body() ==null){
+            if (response.body() == null) {
                 return new HttpResponse(response.code(), "");
-            }else {
+            } else {
                 return new HttpResponse(response.code(), response.body().string());
             }
         } catch (IOException e) {
@@ -72,9 +72,9 @@ public class DefaultExecutoHttp implements ExecutorHttp {
     public HttpResponse executePost(HttpRequest httpRequest) throws LcException {
         try {
             Response response = okHttpClient.newCall(buildRequest(httpRequest)).execute();
-            if ( response.body() ==null){
+            if (response.body() == null) {
                 return new HttpResponse(response.code(), "");
-            }else {
+            } else {
                 return new HttpResponse(response.code(), response.body().string());
             }
         } catch (IOException e) {
@@ -86,9 +86,9 @@ public class DefaultExecutoHttp implements ExecutorHttp {
     public HttpResponse executePut(HttpRequest httpRequest) throws LcException {
         try {
             Response response = okHttpClient.newCall(buildRequest(httpRequest)).execute();
-            if ( response.body() ==null){
+            if (response.body() == null) {
                 return new HttpResponse(response.code(), "");
-            }else {
+            } else {
                 return new HttpResponse(response.code(), response.body().string());
             }
         } catch (IOException e) {
@@ -104,21 +104,23 @@ public class DefaultExecutoHttp implements ExecutorHttp {
         }
         return new Request.Builder()
                 .url(httpRequest.getUrl())
+                .headers(Headers.of(httpRequest.getHeader()))
                 .method(httpRequest.getType().toString(), body)
                 .build();
     }
 
-    private static class DefaultCookieStore implements CookieStore{
+    private static class DefaultCookieStore implements CookieStore {
 
-        private final ReentrantLock lock = new ReentrantLock(false);;
-        private final ConcurrentHashMap<String,ConcurrentHashMap<String,Cookie>> cookieStore = new ConcurrentHashMap<>();
+        private final ReentrantLock lock = new ReentrantLock(false);
+        ;
+        private final ConcurrentHashMap<String, ConcurrentHashMap<String, Cookie>> cookieStore = new ConcurrentHashMap<>();
 
         public void addMyCookie(String domain, List<Cookie> cookieList) {
             if (cookieList == null || cookieList.isEmpty()) {
                 return;
             }
 
-            ConcurrentHashMap<String,Cookie> addCookie = cookieList.stream().collect(Collectors.toMap(Cookie::name, Function.identity(), (oldValue, newValue) -> newValue,ConcurrentHashMap::new));
+            ConcurrentHashMap<String, Cookie> addCookie = cookieList.stream().collect(Collectors.toMap(Cookie::name, Function.identity(), (oldValue, newValue) -> newValue, ConcurrentHashMap::new));
 
             lock.lock();
             try {
@@ -132,7 +134,7 @@ public class DefaultExecutoHttp implements ExecutorHttp {
             }
         }
 
-        public List<Cookie>  getMyCookie(String domain){
+        public List<Cookie> getMyCookie(String domain) {
             if (cookieStore.containsKey(domain)) {
                 return new ArrayList<>(cookieStore.get(domain).values());
             } else {
@@ -170,7 +172,7 @@ public class DefaultExecutoHttp implements ExecutorHttp {
         public List<HttpCookie> getCookies(String domain) {
             if (cookieStore.containsKey(domain)) {
                 return cookieStore.get(domain).values().stream().map(cookie -> {
-                    HttpCookie httpCookie =  new HttpCookie(cookie.name(), cookie.value());
+                    HttpCookie httpCookie = new HttpCookie(cookie.name(), cookie.value());
                     httpCookie.setDomain(cookie.domain());
                     httpCookie.setPath(cookie.path());
                     return httpCookie;
@@ -185,7 +187,7 @@ public class DefaultExecutoHttp implements ExecutorHttp {
             if (cookieStore.containsKey(domain)) {
                 Cookie cookie = cookieStore.get(domain).get(name);
                 if (cookie != null) {
-                    HttpCookie httpCookie =  new HttpCookie(cookie.name(), cookie.value());
+                    HttpCookie httpCookie = new HttpCookie(cookie.name(), cookie.value());
                     httpCookie.setDomain(cookie.domain());
                     httpCookie.setPath(cookie.path());
                     return httpCookie;

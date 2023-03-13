@@ -61,7 +61,7 @@ public class Graphql {
 
         private String suffix = ".graphql";
 
-        private Map<String,String> header = new HashMap<>();
+        private Map<String, String> header = new HashMap<>();
 
         private GraphqlBuilder(String url) {
             this.url = url;
@@ -104,7 +104,7 @@ public class Graphql {
             return this;
         }
 
-        public GraphqlBuilder header(Map<String,String> header) {
+        public GraphqlBuilder header(Map<String, String> header) {
             this.header.putAll(header);
             return this;
         }
@@ -114,8 +114,8 @@ public class Graphql {
         }
 
         public HttpResponse request(ExecutorHttp executorHttp) throws LcException {
-            header.putIfAbsent("referer",url);
-            header.putIfAbsent("Accept","application/json");
+            header.putIfAbsent("referer", url);
+            header.putIfAbsent("Accept", "application/json");
             return HttpRequest.builderPost(url, "application/json")
                     .body(build().generate())
                     .addHeader(header)

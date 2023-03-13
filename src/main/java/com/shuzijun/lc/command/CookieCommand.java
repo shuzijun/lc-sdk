@@ -5,6 +5,12 @@ import com.shuzijun.lc.http.HttpClient;
 
 public class CookieCommand {
 
+    /**
+     * 设置cookie，一般用于设置登录信息
+     *
+     * @param cookie cookie
+     * @return {@link Void}
+     */
     public static SetCookie buildSetCookie(String cookie) {
         return new SetCookie(cookie);
     }

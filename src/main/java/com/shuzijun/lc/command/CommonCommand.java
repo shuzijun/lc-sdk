@@ -9,59 +9,64 @@ import com.shuzijun.lc.http.HttpResponse;
 import com.shuzijun.lc.model.User;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Map;
-
 public class CommonCommand {
 
+
+    /**
+     * 构建验证客户端与网站链接
+     *
+     * @return {@link Boolean} true 验证成功
+     */
     public static Verify buildVerify() {
         return new Verify();
     }
 
+    /**
+     * 构建检查登录状态
+     *
+     * @return {@link Boolean} true 已登录
+     */
     public static CheckLogin buildCheckLogin() {
         return new CheckLogin();
     }
 
+    /**
+     * 构建获取用户信息, 需要提前设置cookie
+     *
+     * @return {@link User} 用户信息
+     */
     public static GetUser buildGetUser() {
         return new GetUser();
     }
 
 
-    /**
-     * 验证客户端与网站链接
-     */
     public static class Verify implements Command<Boolean> {
         @Override
         public Boolean execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
             return HttpRequest.builderGet(client.getVerify())
-                    .addHeader(header)
+                    .addHeader(client.getHeader())
                     .request(client.getExecutorHttp())
                     .isCodeSuccess();
         }
     }
 
-    /**
-     * 检查登录状态
-     */
-    public static class CheckLogin implements  Command<Boolean>{
+    public static class CheckLogin implements Command<Boolean> {
         @Override
         public Boolean execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
-            return HttpRequest.builderGet(client.getPoints()).addHeader(header).request(client.getExecutorHttp()).isCodeSuccess();
+            return HttpRequest.builderGet(client.getPoints()).addHeader(client.getHeader()).request(client.getExecutorHttp()).isCodeSuccess();
         }
     }
 
     public static class GetUser implements Command<User> {
         @Override
         public User execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
             HttpResponse response;
             if (client.isCn()) {
-                response = Graphql.builder(client.getGraphql() + "/noj-go").cn(client.isCn()).header(header)
+                response = Graphql.builder(client.getGraphql() + "/noj-go").cn(client.isCn()).header(client.getHeader())
                         .operationName("userStatus", "userStatusGlobal")
                         .request(client.getExecutorHttp());
             } else {
-                response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(header)
+                response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                         .operationName("userStatus", "globalData")
                         .request(client.getExecutorHttp());
             }

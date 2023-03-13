@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface CookieStore {
 
-    default List<HttpCookie>  parse(String domain, String cookie){
+    default List<HttpCookie> parse(String domain, String cookie) {
         if (cookie == null || cookie.isEmpty()) {
             return new ArrayList<>();
         }
@@ -28,25 +28,25 @@ public interface CookieStore {
         return cookieList;
     }
 
-    default  void setCookie(String domain, String cookie){
-       final List<HttpCookie> cookieList = parse(domain,cookie);
-       clearCookie(domain);
-      addCookie(domain,cookieList);
-   }
-
-    default void setCookie(String domain, List<HttpCookie> cookieList){
+    default void setCookie(String domain, String cookie) {
+        final List<HttpCookie> cookieList = parse(domain, cookie);
         clearCookie(domain);
-        addCookie(domain,cookieList);
+        addCookie(domain, cookieList);
     }
 
-    default void addCookie(String domain, String cookie){
-        final List<HttpCookie> cookieList = parse(domain,cookie);
-        addCookie(domain,cookieList);
+    default void setCookie(String domain, List<HttpCookie> cookieList) {
+        clearCookie(domain);
+        addCookie(domain, cookieList);
     }
 
-     void addCookie(String domain, List<HttpCookie> cookieList);
+    default void addCookie(String domain, String cookie) {
+        final List<HttpCookie> cookieList = parse(domain, cookie);
+        addCookie(domain, cookieList);
+    }
 
-     void clearCookie(String domain);
+    void addCookie(String domain, List<HttpCookie> cookieList);
+
+    void clearCookie(String domain);
 
     List<HttpCookie> getCookies(String domain);
 

@@ -2,10 +2,8 @@ package com.shuzijun.lc.http;
 
 public class HttpResponse {
 
-    private HttpRequest httpRequest;
-
     private final int statusCode;
-
+    private HttpRequest httpRequest;
     private String body;
 
     public HttpResponse(int statusCode) {

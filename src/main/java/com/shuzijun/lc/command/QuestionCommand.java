@@ -6,35 +6,56 @@ import com.shuzijun.lc.errors.LcException;
 import com.shuzijun.lc.http.Graphql;
 import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.http.HttpResponse;
-import com.shuzijun.lc.model.*;
+import com.shuzijun.lc.model.PageInfo;
+import com.shuzijun.lc.model.ProblemSetParam;
+import com.shuzijun.lc.model.Question;
+import com.shuzijun.lc.model.QuestionView;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class QuestionCommand {
 
-   public static ProblemSetQuestionList buildProblemSetQuestionList(ProblemSetParam problemSetParam) {
+    /**
+     * 构建获取题目列表
+     *
+     * @param problemSetParam 题目列表参数
+     * @return {@link PageInfo<QuestionView>} 题目列表
+     */
+    public static ProblemSetQuestionList buildProblemSetQuestionList(ProblemSetParam problemSetParam) {
         return new ProblemSetQuestionList(problemSetParam);
     }
 
+    /**
+     * 构建获取所有题目
+     *
+     * @return {@link List<Question>} 题目列表
+     */
     public static AllQuestions buildAllQuestions() {
         return new AllQuestions();
     }
 
+    /**
+     * 构建获取题目详情
+     *
+     * @param titleSlug 题目slug
+     * @return {@link Question} 题目详情
+     */
     public static GetQuestion buildGetQuestion(String titleSlug) {
         return new GetQuestion(titleSlug);
     }
 
+    /**
+     * 构建获取每日一题
+     *
+     * @return {@link Question} 每日一题信息
+     */
     public static QuestionOfToday buildQuestionOfToday() {
         return new QuestionOfToday();
     }
 
-    /**
-     * 分页获取题目列表
-     */
-    public static class  ProblemSetQuestionList implements Command<PageInfo<QuestionView>> {
+    public static class ProblemSetQuestionList implements Command<PageInfo<QuestionView>> {
 
         private final ProblemSetParam problemSetParam;
 
@@ -44,8 +65,7 @@ public class QuestionCommand {
 
         @Override
         public PageInfo<QuestionView> execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
-            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(header)
+            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                     .operationName("problemsetQuestionList")
                     .variables("categorySlug", problemSetParam.getCategorySlug())
                     .variables("skip", problemSetParam.getSkip())
@@ -75,15 +95,11 @@ public class QuestionCommand {
     }
 
 
-    /**
-     * 获取所有题目
-     */
     public static class AllQuestions implements Command<List<QuestionView>> {
 
         @Override
         public List<QuestionView> execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
-            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(header)
+            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                     .operationName("allQuestions")
                     .request(client.getExecutorHttp());
 
@@ -103,9 +119,6 @@ public class QuestionCommand {
         }
     }
 
-    /**
-     * 获取题目详情
-     */
     public static class GetQuestion implements Command<Question> {
 
         private final String titleSlug;
@@ -116,8 +129,7 @@ public class QuestionCommand {
 
         @Override
         public Question execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
-            HttpResponse response = Graphql.builder(client.getGraphql()).header(header)
+            HttpResponse response = Graphql.builder(client.getGraphql()).header(client.getHeader())
                     .operationName("questionData")
                     .variables("titleSlug", titleSlug).request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
@@ -131,11 +143,10 @@ public class QuestionCommand {
     }
 
 
-    public static class QuestionOfToday implements Command<Question>{
+    public static class QuestionOfToday implements Command<Question> {
         @Override
         public Question execute(HttpClient client) throws LcException {
-            Map<String,String> header = client.getHeader();
-            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(header)
+            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                     .operationName("questionOfToday")
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {

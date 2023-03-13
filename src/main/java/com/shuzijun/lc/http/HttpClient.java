@@ -130,17 +130,17 @@ public class HttpClient {
     }
 
     public CookieStore cookieStore() {
-       return getExecutorHttp().cookieStore();
+        return getExecutorHttp().cookieStore();
     }
 
-    public Map<String,String> getHeader(){
+    public Map<String, String> getHeader() {
         Map<String, String> header = new HashMap<>();
         header.putIfAbsent("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36");
         header.putIfAbsent("Accept", "*/*");
-        header.putIfAbsent("Accept-Language", Locale.getDefault().getLanguage()+"_"+Locale.getDefault().getCountry());
+        header.putIfAbsent("Accept-Language", Locale.getDefault().getLanguage() + "_" + Locale.getDefault().getCountry());
         header.putIfAbsent("origin", getUrl());
 
-        HttpCookie csrfTokenCookie = cookieStore().getCookie(getEndpoint(),"csrftoken");
+        HttpCookie csrfTokenCookie = cookieStore().getCookie(getEndpoint(), "csrftoken");
         if (csrfTokenCookie != null) {
             header.putIfAbsent("x-csrftoken", csrfTokenCookie.getValue());
         }
