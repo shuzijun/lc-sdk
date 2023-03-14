@@ -137,7 +137,7 @@ public class LcClientTest {
                 "        return new int[0];\n" +
                 "    }\n" +
                 "}\n";
-        RunCodeResult result = lcClient.invoker(CodeCommand.buildRunCode(new RunCodeParam("1","two-sum", "[2,7,11,15]\n9", "java",code)));
+        RunCodeResult result = lcClient.invoker(CodeCommand.buildRunCode(new RunCodeParam("1", "two-sum", "[2,7,11,15]\n9", "java", code)));
         Assert.assertNotNull(result);
         System.out.println(JSONObject.toJSONString(result));
 
@@ -150,6 +150,38 @@ public class LcClientTest {
             }
             Thread.sleep(1000);
         }
+    }
+
+    @Test
+    public void testTags() throws LcException {
+        List<Tag> tags = lcClient.invoker(FindCommand.buildTags());
+        Assert.assertNotNull(tags);
+        System.out.println(JSONObject.toJSONString(tags));
+    }
+
+    @Test
+    public void testLists() throws LcException {
+        List<Tag> lists = lcClient.invoker(FindCommand.buildLists());
+        Assert.assertNotNull(lists);
+        System.out.println(JSONObject.toJSONString(lists));
+
+        Tag favoriteTag = lists.stream().filter(tag -> !tag.getType().equals("leetcode_favorites")).findAny().orElse(null);
+        if (favoriteTag != null) {
+            Boolean add = lcClient.invoker(FavoriteCommand.buildAddQuestionToFavorite(favoriteTag.getSlug(), "3"));
+            Assert.assertTrue(add);
+            System.out.println("add success");
+            Boolean rm = lcClient.invoker(FavoriteCommand.buildRemoveQuestionFromFavorite(favoriteTag.getSlug(), "3"));
+            Assert.assertTrue(rm);
+            System.out.println("rm success");
+        }
+
+    }
+
+    @Test
+    public void testCategory() throws LcException {
+        List<Tag> categoryList = lcClient.invoker(FindCommand.buildCategory());
+        Assert.assertNotNull(categoryList);
+        System.out.println(JSONObject.toJSONString(categoryList));
     }
 
 }

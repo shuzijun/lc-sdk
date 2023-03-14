@@ -13,6 +13,12 @@ public class SubmitParam {
     @JSONField(name = "question_id")
     private String questionId;
 
+    /**
+     * @param typedCode  代码
+     * @param lang       语言类型
+     * @param titleSlug  {@link Question#getTitleSlug()}
+     * @param questionId {@link Question#getQuestionId()}
+     */
     public SubmitParam(String typedCode, String lang, String titleSlug, String questionId) {
         this.typedCode = typedCode;
         this.lang = lang;

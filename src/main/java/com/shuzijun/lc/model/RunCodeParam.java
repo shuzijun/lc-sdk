@@ -17,6 +17,13 @@ public class RunCodeParam {
     @JSONField(name = "typed_code")
     private String typedCode;
 
+    /**
+     * @param questionId {@link Question#getQuestionId()}
+     * @param titleSlug  {@link Question#getTitleSlug()}
+     * @param dataInput  {@link Question#getTestCase()} 或者 自定义测试用例
+     * @param lang       语言类型
+     * @param typedCode  代码
+     */
     public RunCodeParam(String questionId, String titleSlug, String dataInput, String lang, String typedCode) {
         this.questionId = questionId;
         this.titleSlug = titleSlug;

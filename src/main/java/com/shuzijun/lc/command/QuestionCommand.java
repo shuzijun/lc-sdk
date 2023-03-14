@@ -39,7 +39,7 @@ public class QuestionCommand {
     /**
      * 构建获取题目详情
      *
-     * @param titleSlug 题目slug
+     * @param titleSlug {@link QuestionView#getTitleSlug()} 题目slug
      * @return {@link Question} 题目详情
      */
     public static GetQuestion buildGetQuestion(String titleSlug) {

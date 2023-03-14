@@ -8,7 +8,7 @@ public class CookieCommand {
     /**
      * 设置cookie，一般用于设置登录信息
      *
-     * @param cookie cookie
+     * @param cookie 设置的cookie,格式为: key=value;key=value
      * @return {@link Void}
      */
     public static SetCookie buildSetCookie(String cookie) {

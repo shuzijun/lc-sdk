@@ -23,7 +23,7 @@ public class CodeCommand {
     /**
      * 提交检查
      *
-     * @param submissionId 提交id,提交代码返回的结果
+     * @param submissionId 提交{@link #buildSubmitCode}返回的id
      * @return {@link SubmitCheckResult} 提交代码结果
      */
 
@@ -34,7 +34,7 @@ public class CodeCommand {
     /**
      * 运行代码
      *
-     * @param runCodeParam 运行参数
+     * @param runCodeParam {@link RunCodeParam} 运行参数
      * @return {@link RunCodeResult} 运行结果，包含运行id
      */
     public static RunCode buildRunCode(RunCodeParam runCodeParam) {
@@ -44,8 +44,8 @@ public class CodeCommand {
     /**
      * 运行检查
      *
-     * @param interpretId 运行id，运行代码返回的结果
-     * @return {@link RunCodeResult} 运行结果
+     * @param interpretId 运行{@link #buildRunCode}返回的{@link RunCodeResult#getInterpretId()
+     * @return {@link RunCodeResult } 运行结果
      */
     public static RunCodeCheck buildRunCodeCheck(String interpretId) {
         return new RunCodeCheck(interpretId);

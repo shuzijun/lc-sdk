@@ -13,6 +13,10 @@ public class ProblemSetParam {
 
     private Filters filters = new Filters();
 
+    /**
+     * @param pageIndex 页码
+     * @param pageSize  每页数量
+     */
     public ProblemSetParam(int pageIndex, int pageSize) {
         this.pageIndex = pageIndex;
         this.pageSize = pageSize;
@@ -46,13 +50,35 @@ public class ProblemSetParam {
         this.filters = filters;
     }
 
+    //TODO 补充枚举值
     public static class Filters {
+        /**
+         * 搜索关键字
+         */
         private String searchKeywords;
+        /**
+         * 排序字段
+         */
         private String orderBy;
+        /**
+         * 排序方式
+         */
         private String sortOrder;
+        /**
+         * 难度
+         */
         private String difficulty;
+        /**
+         * 状态
+         */
         private String status;
+        /**
+         * 列表id
+         */
         private String listId;
+        /**
+         * 标签
+         */
         private List<String> tags;
 
         public String getSearchKeywords() {

@@ -6,6 +6,7 @@ import com.shuzijun.lc.errors.LcException;
 import com.shuzijun.lc.http.Graphql;
 import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.http.HttpResponse;
+import com.shuzijun.lc.model.QuestionView;
 import com.shuzijun.lc.model.Solution;
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,7 +19,7 @@ public class SolutionCommand {
     /**
      * 构建获取题解列表
      *
-     * @param titleSlug 题目slug
+     * @param titleSlug {@link QuestionView#getTitleSlug()} 题目slug
      * @return {@link List<Solution>} 题解列表
      */
     public static SolutionList buildSolutionList(String titleSlug) {
@@ -30,7 +31,7 @@ public class SolutionCommand {
      *
      * @param first     获取数量
      * @param skip      跳过数量
-     * @param titleSlug 题目slug
+     * @param titleSlug {@link QuestionView#getTitleSlug()} 题目slug
      * @return {@link List<Solution>} 题解列表
      */
     public static SolutionList buildSolutionList(int first, int skip, String titleSlug) {
@@ -40,9 +41,9 @@ public class SolutionCommand {
     /**
      * 构建获取题解详情
      *
-     * @param articleSlug 题解slug
-     *                    <li>leetcode.com articleSlug为question.titleSlug<li/>
-     *                    <li> leetcode.cn articleSlug为SolutionList获取的articleSlug<li/>
+     * @param articleSlug 题解slug <br>
+     *                    leetcode.com articleSlug为{@link  QuestionView#getTitleSlug()}<br>
+     *                    leetcode.cn articleSlug为{@link  Solution#getSlug()}<br>
      * @return {@link String} 题解详情
      */
     public static SolutionArticle buildSolutionArticle(String articleSlug) {
