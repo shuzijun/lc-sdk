@@ -25,8 +25,6 @@ jobs:
     - name: Set LD_VERSION
       if: ${{ github.event_name == 'workflow_dispatch'}}
       run: echo "LD_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-    - name: Set GITHUB_TOKEN
-      run: echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
 
 
     - uses: actions/checkout@v2
@@ -55,7 +53,7 @@ jobs:
       env:
         LD_VERSION: ${{ env.LD_VERSION }}
         USERNAME: ${{ github.actor }}
-        TOKEN: ${{ env.GITHUB_TOKEN }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
