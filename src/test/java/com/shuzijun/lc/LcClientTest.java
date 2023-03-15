@@ -21,7 +21,7 @@ public class LcClientTest {
 
     @BeforeClass
     public static void before() throws LcException {
-        lcClient = LcClient.builder(HttpClient.SiteEnum.CN).build();
+        lcClient = LcClient.builder(HttpClient.SiteEnum.EN).build();
         // 从环境变量中获取cookie
         cookie = System.getenv("LC_COOKIE");
         lcClient.invoker(CookieCommand.buildSetCookie(cookie));
@@ -93,6 +93,10 @@ public class LcClientTest {
 
     @Test
     public void testSubmitCode() throws LcException, InterruptedException {
+        if (StringUtils.isBlank(cookie)) {
+            System.out.println("cookie is null,skip testRunCode");
+            return;
+        }
         String code = "class Solution {\n" +
                 "    public int[] twoSum(int[] nums, int target) {\n" +
                 "        int n = nums.length;\n" +
@@ -124,6 +128,10 @@ public class LcClientTest {
 
     @Test
     public void testRunCode() throws LcException, InterruptedException {
+        if (StringUtils.isBlank(cookie)) {
+            System.out.println("cookie is null,skip testRunCode");
+            return;
+        }
         String code = "class Solution {\n" +
                 "    public int[] twoSum(int[] nums, int target) {\n" +
                 "        int n = nums.length;\n" +
@@ -182,6 +190,38 @@ public class LcClientTest {
         List<Tag> categoryList = lcClient.invoker(FindCommand.buildCategory());
         Assert.assertNotNull(categoryList);
         System.out.println(JSONObject.toJSONString(categoryList));
+    }
+
+    @Test
+    public void testSession() throws LcException {
+        if (StringUtils.isBlank(cookie)) {
+            System.out.println("cookie is null,skip testRunCode");
+            return;
+        }
+        User u = lcClient.invoker(CommonCommand.buildGetUser());
+        Assert.assertNotNull(u);
+        List<Session> sessions = lcClient.invoker(SessionCommand.buildSessionListCommand(u.getUserSlug()));
+        Assert.assertNotNull(sessions);
+        System.out.println(JSONObject.toJSONString(sessions));
+
+        if (sessions.size() > 1) {
+            Boolean b = lcClient.invoker(SessionCommand.buildSwitchSession(sessions.get(1).getId()));
+            Assert.assertTrue(b);
+        }
+    }
+
+    @Test
+    public void testSubmission() throws LcException {
+        if (StringUtils.isBlank(cookie)) {
+            System.out.println("cookie is null,skip testRunCode");
+            return;
+        }
+        List<Submission> submissions = lcClient.invoker(SubmissionCommand.buildSubmissionList("two-sum", 0, 10));
+        Assert.assertNotNull(submissions);
+        System.out.println(JSONObject.toJSONString(submissions));
+        SubmissionDetail submissionDetail = lcClient.invoker(SubmissionCommand.buildSubmissionDetail(submissions.get(0).getId()));
+        Assert.assertNotNull(submissionDetail);
+        System.out.println(JSONObject.toJSONString(submissionDetail));
     }
 
 }

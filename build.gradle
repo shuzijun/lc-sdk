@@ -1,10 +1,14 @@
 plugins {
     id 'java'
     id 'java-library'
+    id 'maven-publish'
 }
 
 group 'com.shuzijun'
-version '0.0.1-SNAPSHOT'
+version (System.getenv('LD_VERSION')==null ? project.sdkVersion :System.getenv('LD_VERSION'))
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -22,4 +26,39 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/shuzijun/lc-sdk")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+            pom({
+                name = 'lc-sdk'
+                packaging = 'jar'
+                url = 'https://github.com/shuzijun/lc-sdk'
+
+                licenses {
+                    license {
+                        name = 'GNU GENERAL PUBLIC LICENSE Version 3'
+                        url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+                    }
+                }
+            })
+        }
+    }
 }
