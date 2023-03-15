@@ -51,7 +51,7 @@ jobs:
     - name: Publish to GitHub Packages
       run: |
            ./gradlew clean
-           ./gradle publish
+           ./gradlew publish
       env:
         LD_VERSION: ${{ env.LD_VERSION }}
         USERNAME: ${{ github.actor }}
