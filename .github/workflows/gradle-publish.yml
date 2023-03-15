@@ -53,7 +53,7 @@ jobs:
       env:
         LD_VERSION: ${{ env.LD_VERSION }}
         USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TOKEN: ${{ secrets.PKG_TOKEN }}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
