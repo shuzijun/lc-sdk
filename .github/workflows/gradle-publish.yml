@@ -55,8 +55,24 @@ jobs:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.PKG_TOKEN }}
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: lc-sdk
-        path: build/libs/lc-sdk-*.*.*.jar
+        tag_name: v${{ env.LD_VERSION }}
+        release_name: v${{ env.LD_VERSION }}
+        draft: true
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: ./build/libs/lc-sdk-${{ env.LD_VERSION }}.jar
+        asset_name: lc-sdk-${{ env.LD_VERSION }}.jar
+        asset_content_type: application/java-archive
