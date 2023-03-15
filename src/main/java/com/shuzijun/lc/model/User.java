@@ -1,7 +1,5 @@
 package com.shuzijun.lc.model;
 
-import java.util.Objects;
-
 public class User {
 
     private String username;
@@ -40,8 +38,7 @@ public class User {
     }
 
     public void setPremium(Boolean premium) {
-        isPremium = Objects.requireNonNullElse(premium, false);
-        ;
+        isPremium = premium != null && premium;
     }
 
     public boolean isVerified() {
@@ -49,7 +46,7 @@ public class User {
     }
 
     public void setVerified(Boolean verified) {
-        isVerified = Objects.requireNonNullElse(verified, false);
+        isVerified = verified != null && verified;
     }
 
     public boolean isPhoneVerified() {
@@ -57,7 +54,7 @@ public class User {
     }
 
     public void setPhoneVerified(Boolean phoneVerified) {
-        isPhoneVerified = Objects.requireNonNullElse(phoneVerified, false);
+        isPhoneVerified = phoneVerified != null && phoneVerified;
     }
 
     public boolean isSignedIn() {
@@ -65,7 +62,7 @@ public class User {
     }
 
     public void setSignedIn(Boolean signedIn) {
-        isSignedIn = Objects.requireNonNullElse(signedIn, false);
+        isSignedIn = signedIn != null && signedIn;
     }
 
     public String getRealName() {
