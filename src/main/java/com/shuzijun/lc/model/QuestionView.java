@@ -66,6 +66,11 @@ public class QuestionView {
         return level;
     }
 
+    @JSONField(name = "level")
+    public void setLevel(Integer level) {
+        this.level = level;
+    }
+
     @JSONField(name = "difficulty")
     public void setLevel(String difficulty) {
         if (difficulty == null) {
@@ -115,9 +120,14 @@ public class QuestionView {
         return acceptance;
     }
 
-    @JSONField(name = "acRate")
+    @JSONField(name = "acceptance")
     public void setAcceptance(Double acceptance) {
-        if (acceptance != null && acceptance.doubleValue() > 1) {
+        this.acceptance = acceptance;
+    }
+
+    @JSONField(name = "acRate")
+    public void setAcRate(Double acceptance) {
+        if (acceptance != null && acceptance > 1) {
             acceptance = acceptance / 100;
         }
         this.acceptance = acceptance;
@@ -127,9 +137,14 @@ public class QuestionView {
         return frequency;
     }
 
-    @JSONField(name = "freqBar")
+    @JSONField(name = "frequency")
     public void setFrequency(Double frequency) {
-        if (frequency != null && frequency.doubleValue() > 1) {
+        this.frequency = frequency;
+    }
+
+    @JSONField(name = "freqBar")
+    public void setFreqBar(Double frequency) {
+        if (frequency != null && frequency > 1) {
             frequency = frequency / 100;
         }
         this.frequency = frequency;

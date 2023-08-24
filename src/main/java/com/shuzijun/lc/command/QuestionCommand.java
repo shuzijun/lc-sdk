@@ -55,6 +55,15 @@ public class QuestionCommand {
         return new QuestionOfToday();
     }
 
+    /**
+     * 构建获取随机题目
+     * @param problemSetParam 题目列表参数
+     * @return {@link String} 题目slug
+     */
+    public static RandomQuestion buildRandomQuestion(ProblemSetParam problemSetParam) {
+        return new RandomQuestion(problemSetParam);
+    }
+
     public static class ProblemSetQuestionList implements Command<PageInfo<QuestionView>> {
 
         private final ProblemSetParam problemSetParam;
@@ -134,8 +143,7 @@ public class QuestionCommand {
                     .variables("titleSlug", titleSlug).request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 JSONObject jsonObject = JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("question");
-                Question question = jsonObject.toJavaObject(Question.class);
-                return question;
+                return jsonObject.toJavaObject(Question.class);
             } else {
                 throw new LcException("GetQuestion fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
             }
@@ -162,6 +170,36 @@ public class QuestionCommand {
                 }
 
                 return buildGetQuestion(todayRecordObject.getJSONObject("question").getString("titleSlug")).execute(client);
+            } else {
+                throw new LcException("QuestionOfToday fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
+            }
+        }
+    }
+
+    public static class RandomQuestion implements Command<String> {
+
+        private final ProblemSetParam problemSetParam;
+
+        public RandomQuestion(ProblemSetParam problemSetParam) {
+            this.problemSetParam = problemSetParam;
+        }
+        @Override
+        public String execute(HttpClient client) throws LcException {
+            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
+                    .operationName("randomQuestion")
+                    .variables("categorySlug", problemSetParam.getCategorySlug())
+                    .variables("filters", problemSetParam.getFilters())
+                    .request(client.getExecutorHttp());
+
+            if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
+                String body = response.getBody();
+                String titleSlug;
+                if (client.isCn()) {
+                    titleSlug = JSONObject.parseObject(body).getJSONObject("data").getString("randomQuestion");
+                } else {
+                    titleSlug = JSONObject.parseObject(body).getJSONObject("data").getJSONObject("randomQuestion").getString("titleSlug");
+                }
+                return titleSlug;
             } else {
                 throw new LcException("QuestionOfToday fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
             }

@@ -6,6 +6,7 @@ import com.shuzijun.lc.http.Graphql;
 import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.http.HttpRequest;
 import com.shuzijun.lc.http.HttpResponse;
+import com.shuzijun.lc.model.Checkin;
 import com.shuzijun.lc.model.User;
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,6 +38,15 @@ public class CommonCommand {
      */
     public static GetUser buildGetUser() {
         return new GetUser();
+    }
+
+    /**
+     * 检查登录状态
+     *
+     * @return {@link Checkin} 登录信息
+     */
+    public static GetCheckin buildCheckin() {
+        return new GetCheckin();
     }
 
 
@@ -94,6 +104,19 @@ public class CommonCommand {
                 return new User();
             }
 
+        }
+    }
+
+    public static class  GetCheckin implements Command<Checkin> {
+
+        @Override
+        public Checkin execute(HttpClient client) throws LcException {
+            HttpResponse response = Graphql.builder(client.getGraphql()).operationName("checkin").header(client.getHeader()).request(client.getExecutorHttp());
+            if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
+               return  JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("checkin").to(Checkin.class);
+            } else {
+                throw new LcException("checkin fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
+            }
         }
     }
 }
