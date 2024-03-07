@@ -23,8 +23,8 @@ public class QuestionCommand {
      * @param problemSetParam 题目列表参数
      * @return {@link PageInfo<QuestionView>} 题目列表
      */
-    public static ProblemSetQuestionList buildProblemSetQuestionList(ProblemSetParam problemSetParam) {
-        return new ProblemSetQuestionList(problemSetParam);
+    public static ProblemSetQuestionList buildProblemSetQuestionList(ProblemSetParam problemSetParam,Option<?> ...option) {
+        return new ProblemSetQuestionList(problemSetParam,option);
     }
 
     /**
@@ -32,8 +32,8 @@ public class QuestionCommand {
      *
      * @return {@link List<Question>} 题目列表
      */
-    public static AllQuestions buildAllQuestions() {
-        return new AllQuestions();
+    public static AllQuestions buildAllQuestions(Option<?> ...option) {
+        return new AllQuestions(option);
     }
 
     /**
@@ -42,8 +42,8 @@ public class QuestionCommand {
      * @param titleSlug {@link QuestionView#getTitleSlug()} 题目slug
      * @return {@link Question} 题目详情
      */
-    public static GetQuestion buildGetQuestion(String titleSlug) {
-        return new GetQuestion(titleSlug);
+    public static GetQuestion buildGetQuestion(String titleSlug,Option<?> ...option) {
+        return new GetQuestion(titleSlug,option);
     }
 
     /**
@@ -51,8 +51,8 @@ public class QuestionCommand {
      *
      * @return {@link Question} 每日一题信息
      */
-    public static QuestionOfToday buildQuestionOfToday() {
-        return new QuestionOfToday();
+    public static QuestionOfToday buildQuestionOfToday(Option<?> ...option) {
+        return new QuestionOfToday(option);
     }
 
     /**
@@ -60,15 +60,16 @@ public class QuestionCommand {
      * @param problemSetParam 题目列表参数
      * @return {@link String} 题目slug
      */
-    public static RandomQuestion buildRandomQuestion(ProblemSetParam problemSetParam) {
-        return new RandomQuestion(problemSetParam);
+    public static RandomQuestion buildRandomQuestion(ProblemSetParam problemSetParam,Option<?> ...option) {
+        return new RandomQuestion(problemSetParam,option);
     }
 
-    public static class ProblemSetQuestionList implements Command<PageInfo<QuestionView>> {
+    public static class ProblemSetQuestionList extends OptionCommand implements Command<PageInfo<QuestionView>> {
 
         private final ProblemSetParam problemSetParam;
 
-        public ProblemSetQuestionList(ProblemSetParam problemSetParam) {
+        public ProblemSetQuestionList(ProblemSetParam problemSetParam,Option<?> ...option) {
+            super(option);
             this.problemSetParam = problemSetParam;
         }
 
@@ -80,6 +81,7 @@ public class QuestionCommand {
                     .variables("skip", problemSetParam.getSkip())
                     .variables("limit", problemSetParam.getPageSize())
                     .variables("filters", problemSetParam.getFilters())
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
 
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
@@ -104,12 +106,17 @@ public class QuestionCommand {
     }
 
 
-    public static class AllQuestions implements Command<List<QuestionView>> {
+    public static class AllQuestions extends OptionCommand implements Command<List<QuestionView>> {
+
+        public AllQuestions(Option<?> ...option) {
+            super(option);
+        }
 
         @Override
         public List<QuestionView> execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                     .operationName("allQuestions")
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
 
             if (response.isCodeSuccess()) {
@@ -128,11 +135,12 @@ public class QuestionCommand {
         }
     }
 
-    public static class GetQuestion implements Command<Question> {
+    public static class GetQuestion  extends OptionCommand implements Command<Question> {
 
         private final String titleSlug;
 
-        public GetQuestion(String titleSlug) {
+        public GetQuestion(String titleSlug,Option<?> ...option) {
+            super(option);
             this.titleSlug = titleSlug;
         }
 
@@ -140,7 +148,9 @@ public class QuestionCommand {
         public Question execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).header(client.getHeader())
                     .operationName("questionData")
-                    .variables("titleSlug", titleSlug).request(client.getExecutorHttp());
+                    .variables("titleSlug", titleSlug)
+                    .addOption(getOptions())
+                    .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 JSONObject jsonObject = JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("question");
                 return jsonObject.toJavaObject(Question.class);
@@ -151,11 +161,16 @@ public class QuestionCommand {
     }
 
 
-    public static class QuestionOfToday implements Command<Question> {
+    public static class QuestionOfToday extends OptionCommand implements Command<Question> {
+
+        public QuestionOfToday(Option<?>...option) {
+            super(option);
+        }
         @Override
         public Question execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                     .operationName("questionOfToday")
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 JSONObject jsonObject = JSONObject.parseObject(response.getBody()).getJSONObject("data");
@@ -176,11 +191,12 @@ public class QuestionCommand {
         }
     }
 
-    public static class RandomQuestion implements Command<String> {
+    public static class RandomQuestion extends OptionCommand implements Command<String> {
 
         private final ProblemSetParam problemSetParam;
 
-        public RandomQuestion(ProblemSetParam problemSetParam) {
+        public RandomQuestion(ProblemSetParam problemSetParam,Option<?>...option) {
+            super(option);
             this.problemSetParam = problemSetParam;
         }
         @Override
@@ -189,6 +205,7 @@ public class QuestionCommand {
                     .operationName("randomQuestion")
                     .variables("categorySlug", problemSetParam.getCategorySlug())
                     .variables("filters", problemSetParam.getFilters())
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
 
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {

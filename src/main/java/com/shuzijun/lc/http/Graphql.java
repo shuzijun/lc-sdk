@@ -2,14 +2,14 @@ package com.shuzijun.lc.http;
 
 
 import com.alibaba.fastjson2.JSONObject;
+import com.shuzijun.lc.command.Option;
 import com.shuzijun.lc.errors.LcException;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Graphql {
 
@@ -63,6 +63,8 @@ public class Graphql {
 
         private Map<String, String> header = new HashMap<>();
 
+        private List<Option<?>> options = new ArrayList<>();
+
         private GraphqlBuilder(String url) {
             this.url = url;
         }
@@ -109,6 +111,11 @@ public class Graphql {
             return this;
         }
 
+        public GraphqlBuilder addOption(Option<?> ...option){
+            this.options.addAll(Arrays.asList(option));
+            return this;
+        }
+
         public Graphql build() {
             return new Graphql(operationName, variables, query);
         }
@@ -119,6 +126,7 @@ public class Graphql {
             return HttpRequest.builderPost(url, "application/json")
                     .body(build().generate())
                     .addHeader(header)
+                    .addOption(options.toArray(new Option<?>[0]))
                     .request(executorHttp);
         }
     }

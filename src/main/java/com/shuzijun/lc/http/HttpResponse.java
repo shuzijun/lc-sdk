@@ -15,6 +15,12 @@ public class HttpResponse {
         this.body = body;
     }
 
+    public HttpResponse(int statusCode, String body, HttpRequest httpRequest) {
+        this.statusCode = statusCode;
+        this.httpRequest = httpRequest;
+        this.body = body;
+    }
+
     public int getStatusCode() {
         return statusCode;
     }

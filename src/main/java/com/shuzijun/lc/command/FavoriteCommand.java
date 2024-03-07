@@ -5,6 +5,7 @@ import com.shuzijun.lc.errors.LcException;
 import com.shuzijun.lc.http.Graphql;
 import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.http.HttpResponse;
+import com.shuzijun.lc.model.FavoriteResult;
 import com.shuzijun.lc.model.Question;
 import com.shuzijun.lc.model.Tag;
 import org.apache.commons.lang3.StringUtils;
@@ -18,8 +19,8 @@ public class FavoriteCommand {
      * @param questionId     {@link Question#getQuestionId()} 题目id
      * @return {@link Boolean} 是否成功
      */
-    public static AddQuestionToFavorite buildAddQuestionToFavorite(String favoriteIdHash, String questionId) {
-        return new AddQuestionToFavorite(favoriteIdHash, questionId);
+    public static AddQuestionToFavorite buildAddQuestionToFavorite(String favoriteIdHash, String questionId,Option<?> ...option) {
+        return new AddQuestionToFavorite(favoriteIdHash, questionId,option);
     }
 
     /**
@@ -29,32 +30,34 @@ public class FavoriteCommand {
      * @param questionId     {@link Question#getQuestionId()} 题目id
      * @return {@link Boolean} 是否成功
      */
-    public static RemoveQuestionFromFavorite buildRemoveQuestionFromFavorite(String favoriteIdHash, String questionId) {
-        return new RemoveQuestionFromFavorite(favoriteIdHash, questionId);
+    public static RemoveQuestionFromFavorite buildRemoveQuestionFromFavorite(String favoriteIdHash, String questionId,Option<?> ...option) {
+        return new RemoveQuestionFromFavorite(favoriteIdHash, questionId,option);
     }
 
 
-    public static class AddQuestionToFavorite implements Command<Boolean> {
+    public static class AddQuestionToFavorite  extends OptionCommand implements Command<FavoriteResult> {
 
         private final String favoriteIdHash;
 
         private final String questionId;
 
-        public AddQuestionToFavorite(String favoriteIdHash, String questionId) {
+        public AddQuestionToFavorite(String favoriteIdHash, String questionId,Option<?> ...option) {
+            super(option);
             this.favoriteIdHash = favoriteIdHash;
             this.questionId = questionId;
         }
 
         @Override
-        public Boolean execute(HttpClient client) throws LcException {
+        public FavoriteResult execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).header(client.getHeader())
                     .operationName("addQuestionToFavorite")
                     .variables("favoriteIdHash", favoriteIdHash).variables("questionId", questionId)
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 String body = response.getBody();
                 JSONObject object = JSONObject.parseObject(body).getJSONObject("data").getJSONObject("addQuestionToFavorite");
-                return object.getBoolean("ok");
+                return object.to(FavoriteResult.class);
             } else {
                 throw new LcException("AddQuestionToFavorite fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
             }
@@ -62,27 +65,29 @@ public class FavoriteCommand {
     }
 
 
-    public static class RemoveQuestionFromFavorite implements Command<Boolean> {
+    public static class RemoveQuestionFromFavorite extends OptionCommand implements Command<FavoriteResult> {
 
         private final String favoriteIdHash;
 
         private final String questionId;
 
-        public RemoveQuestionFromFavorite(String favoriteIdHash, String questionId) {
+        public RemoveQuestionFromFavorite(String favoriteIdHash, String questionId,Option<?> ...option) {
+            super(option);
             this.favoriteIdHash = favoriteIdHash;
             this.questionId = questionId;
         }
 
         @Override
-        public Boolean execute(HttpClient client) throws LcException {
+        public FavoriteResult execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).header(client.getHeader())
                     .operationName("removeQuestionFromFavorite")
                     .variables("favoriteIdHash", favoriteIdHash).variables("questionId", questionId)
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 String body = response.getBody();
                 JSONObject object = JSONObject.parseObject(body).getJSONObject("data").getJSONObject("removeQuestionFromFavorite");
-                return object.getBoolean("ok");
+                return object.to(FavoriteResult.class);
             } else {
                 throw new LcException("RemoveQuestionFromFavorite fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
             }

@@ -17,7 +17,7 @@ public class HttpClient {
     private static final String submissions = "/submissions/detail/";
     private static final String tags = "/problems/api/tags/";
     private static final String favorites = "/problems/api/favorites/";
-    private static final String verify = "/problemset/all/";
+    private static final String verify = "/problemset/";
     private static final String progress = "/api/progress/all/";
     private static final String session = "/session/";
     private static final String cardInfo = "/problems/api/card-info/";
@@ -44,16 +44,28 @@ public class HttpClient {
     public static String buildHttpTrace(HttpRequest httpRequest, HttpResponse httpResponse) {
         StringBuilder traceBuilder = new StringBuilder();
         traceBuilder.append("---------START-HTTP---------\n");
+        traceBuilder.append("-----------REQUEST----------\n");
         traceBuilder.append(httpRequest.getType()).append(" ").append(httpRequest.getUrl()).append(" HTTP/1.1\n");
         if (httpRequest.getContentType() != null) {
             traceBuilder.append("content-type").append(": ").append(httpRequest.getContentType()).append("\n");
         }
-        httpRequest.getHeader().forEach((k, v) ->
-                traceBuilder.append(k).append(": ").append(v).append("\n")
+        httpRequest.getHeader().forEach((k, v) -> {
+            if (k.equalsIgnoreCase("cookie")) {
+                return;
+            }
+            traceBuilder.append(k).append(": ").append(v).append("\n");
+           }
         );
         if (httpRequest.getBody() != null) {
             traceBuilder.append(httpRequest.getBody()).append("\n");
         }
+
+        if (httpResponse != null) {
+            traceBuilder.append("-----------RESPONSE---------\n");
+            traceBuilder.append("statusCode").append(": ").append(httpResponse.getStatusCode()).append("\n");
+            traceBuilder.append("body").append(": ").append(httpResponse.getBody()).append("\n");
+        }
+        traceBuilder.append("---------END-HTTP---------\n");
         return traceBuilder.toString();
     }
 

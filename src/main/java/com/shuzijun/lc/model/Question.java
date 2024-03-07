@@ -104,11 +104,11 @@ public class Question extends QuestionView {
         this.hints = hints;
     }
 
-    public CodeMetaData getMetaData() {
+    public CodeMetaData getCodeMetaData() {
         return metaData;
     }
 
-    public void setMetaData(CodeMetaData metaData) {
+    public void setCodeMetaData(CodeMetaData metaData) {
         this.metaData = metaData;
     }
 

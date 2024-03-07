@@ -23,8 +23,8 @@ public class SubmissionCommand {
      * @param limit     限制
      * @return {@link List<Submission>} 提交列表
      */
-    public static SubmissionList buildSubmissionList(String titleSlug, int offset, int limit) {
-        return new SubmissionList(titleSlug, offset, limit);
+    public static SubmissionList buildSubmissionList(String titleSlug, int offset, int limit,Option<?> ...option) {
+        return new SubmissionList(titleSlug, offset, limit,option);
     }
 
     /**
@@ -33,11 +33,11 @@ public class SubmissionCommand {
      * @param submissionId {@link Submission#getId()} 提交id
      * @return {@link SubmissionDetail} 提交详情
      */
-    public static GetSubmissionDetail buildSubmissionDetail(String submissionId) {
-        return new GetSubmissionDetail(submissionId);
+    public static GetSubmissionDetail buildSubmissionDetail(String submissionId,Option<?> ...option) {
+        return new GetSubmissionDetail(submissionId,option);
     }
 
-    public static class SubmissionList implements Command<List<Submission>> {
+    public static class SubmissionList extends OptionCommand implements Command<List<Submission>> {
 
         private final String titleSlug;
 
@@ -45,7 +45,8 @@ public class SubmissionCommand {
 
         private final int limit;
 
-        public SubmissionList(String titleSlug, int offset, int limit) {
+        public SubmissionList(String titleSlug, int offset, int limit,Option<?>...option) {
+            super(option);
             this.titleSlug = titleSlug;
             this.offset = offset;
             this.limit = limit;
@@ -58,6 +59,7 @@ public class SubmissionCommand {
                     .variables("offset", offset)
                     .variables("limit", limit)
                     .variables("questionSlug", titleSlug)
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 JSONArray jsonArray = JSONObject.parseObject(response.getBody()).getJSONObject("data")
@@ -69,11 +71,12 @@ public class SubmissionCommand {
         }
     }
 
-    public static class GetSubmissionDetail implements Command<SubmissionDetail> {
+    public static class GetSubmissionDetail extends OptionCommand implements Command<SubmissionDetail> {
 
         private final String submissionId;
 
-        public GetSubmissionDetail(String submissionId) {
+        public GetSubmissionDetail(String submissionId,Option<?> ...option) {
+            super(option);
             this.submissionId = submissionId;
         }
 
@@ -82,6 +85,7 @@ public class SubmissionCommand {
             if (client.isCn()) {
                 HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
                         .operationName("submissionDetail").variables("id", submissionId)
+                        .addOption(getOptions())
                         .request(client.getExecutorHttp());
                 if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                     String body = response.getBody();

@@ -10,6 +10,8 @@ public class RunCodeResult {
     @JSONField(name = "test_case")
     private String testCase;
 
+    private Integer httpStatueCode;
+
     public String getInterpretId() {
         return interpretId;
     }
@@ -24,5 +26,13 @@ public class RunCodeResult {
 
     public void setTestCase(String testCase) {
         this.testCase = testCase;
+    }
+
+    public Integer getHttpStatueCode() {
+        return httpStatueCode;
+    }
+
+    public void setHttpStatueCode(Integer httpStatueCode) {
+        this.httpStatueCode = httpStatueCode;
     }
 }

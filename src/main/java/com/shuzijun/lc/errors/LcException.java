@@ -18,12 +18,12 @@ public class LcException extends Exception {
     }
 
     public LcException(String message, String httpTrace) {
-        super(message);
+        super(message + "\n" + httpTrace);
         this.httpTrace = httpTrace;
     }
 
     public LcException(String message, Exception e, String httpTrace) {
-        super(message);
+        super(message,e);
         this.httpTrace = httpTrace;
     }
 

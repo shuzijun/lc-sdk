@@ -63,7 +63,7 @@ public class LcClientTest {
 
     @Test
     public void testGetQuestion() throws LcException {
-        QuestionView questionView = lcClient.invoker(QuestionCommand.buildGetQuestion("two-sum"));
+        QuestionView questionView = lcClient.invoker(QuestionCommand.buildGetQuestion("two-sum",new OptionTest("two-sum")));
         Assert.assertNotNull(questionView);
         System.out.println(JSON.toJSONString(questionView));
     }
@@ -110,12 +110,13 @@ public class LcClientTest {
                 "        return new int[0];\n" +
                 "    }\n" +
                 "}\n";
-        Integer result = lcClient.invoker(CodeCommand.buildSubmitCode(new SubmitParam(code, "java", "two-sum", "1")));
+        SubmitResult result = lcClient.invoker(CodeCommand.buildSubmitCode(new SubmitParam(code, "java", "two-sum", "1")));
         Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getSubmissionId());
         System.out.println(result);
 
         for (int i = 0; i < 100; i++) {
-            SubmitCheckResult submitCheckResult = lcClient.invoker(CodeCommand.buildSubmitCheck(result));
+            SubmitCheckResult submitCheckResult = lcClient.invoker(CodeCommand.buildSubmitCheck(result.getSubmissionId()));
             Assert.assertNotNull(submitCheckResult);
             if (!"PENDING".equalsIgnoreCase(submitCheckResult.getState()) && !"STARTED".equalsIgnoreCase(submitCheckResult.getState())) {
                 System.out.println(JSON.toJSONString(submitCheckResult));

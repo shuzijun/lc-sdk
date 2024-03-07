@@ -23,7 +23,7 @@ public class RunCodeCheckResult {
     @JSONField(name = "pretty_lang")
     private String prettyLang;
     @JSONField(name = "run_success")
-    private String runSuccess;
+    private boolean runSuccess;
     @JSONField(name = "runtime_error")
     private String runtimeError;
     @JSONField(name = "runtime_percentile")
@@ -157,11 +157,11 @@ public class RunCodeCheckResult {
         this.prettyLang = prettyLang;
     }
 
-    public String getRunSuccess() {
+    public boolean getRunSuccess() {
         return runSuccess;
     }
 
-    public void setRunSuccess(String runSuccess) {
+    public void setRunSuccess(boolean runSuccess) {
         this.runSuccess = runSuccess;
     }
 

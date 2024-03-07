@@ -22,8 +22,8 @@ public class SolutionCommand {
      * @param titleSlug {@link QuestionView#getTitleSlug()} 题目slug
      * @return {@link List<Solution>} 题解列表
      */
-    public static SolutionList buildSolutionList(String titleSlug) {
-        return new SolutionList(200, 0, titleSlug);
+    public static SolutionList buildSolutionList(String titleSlug,Option<?> ...option) {
+        return new SolutionList(200, 0, titleSlug,option);
     }
 
     /**
@@ -34,8 +34,8 @@ public class SolutionCommand {
      * @param titleSlug {@link QuestionView#getTitleSlug()} 题目slug
      * @return {@link List<Solution>} 题解列表
      */
-    public static SolutionList buildSolutionList(int first, int skip, String titleSlug) {
-        return new SolutionList(first, skip, titleSlug);
+    public static SolutionList buildSolutionList(int first, int skip, String titleSlug,Option<?> ...option) {
+        return new SolutionList(first, skip, titleSlug,option);
     }
 
     /**
@@ -46,18 +46,19 @@ public class SolutionCommand {
      *                    leetcode.cn articleSlug为{@link  Solution#getSlug()}<br>
      * @return {@link String} 题解详情
      */
-    public static SolutionArticle buildSolutionArticle(String articleSlug) {
-        return new SolutionArticle(articleSlug);
+    public static SolutionArticle buildSolutionArticle(String articleSlug,Option<?> ...option) {
+        return new SolutionArticle(articleSlug,option);
     }
 
 
-    public static class SolutionList implements Command<List<Solution>> {
+    public static class SolutionList extends OptionCommand implements Command<List<Solution>> {
 
         private final int first;
         private final int skip;
         private final String titleSlug;
 
-        public SolutionList(int first, int skip, String titleSlug) {
+        public SolutionList(int first, int skip, String titleSlug,Option<?> ...option) {
+            super(option);
             this.first = first;
             this.skip = skip;
             this.titleSlug = titleSlug;
@@ -69,9 +70,10 @@ public class SolutionCommand {
                 return null;
             }
             HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
-                    .operationName("questionSolutionArticles").
-                    variables("questionSlug", titleSlug)
+                    .operationName("questionSolutionArticles")
+                    .variables("questionSlug", titleSlug)
                     .variables("first", first).variables("skip", skip).variables("orderBy", "DEFAULT")
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 List<Solution> solutionList = new ArrayList<>();
@@ -93,19 +95,23 @@ public class SolutionCommand {
         }
     }
 
-    public static class SolutionArticle implements Command<String> {
+    public static class SolutionArticle extends OptionCommand implements Command<String> {
 
         private final String articleSlug;
 
-        public SolutionArticle(String articleSlug) {
+        public SolutionArticle(String articleSlug,Option<?> ...option) {
+            super(option);
             this.articleSlug = articleSlug;
         }
 
         @Override
         public String execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
-                    .operationName("solutionDetailArticle").
-                    variables("slug", articleSlug).variables("titleSlug", articleSlug).variables("orderBy", "DEFAULT")
+                    .operationName("solutionDetailArticle")
+                    .variables("slug", articleSlug)
+                    .variables("titleSlug", articleSlug)
+                    .variables("orderBy", "DEFAULT")
+                    .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 JSONObject solutionArticleObject = JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("solutionArticle");

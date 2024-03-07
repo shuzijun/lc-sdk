@@ -20,6 +20,8 @@ public class Tag {
     @JSONField(alternateNames = {"questions"})
     private Set<String> questions = new HashSet<>();
 
+    private boolean isSelect = false;
+
     public String getSlug() {
         return slug;
     }
@@ -58,5 +60,13 @@ public class Tag {
 
     public void setQuestions(Set<String> questions) {
         this.questions = questions;
+    }
+
+    public boolean isSelect() {
+        return isSelect;
+    }
+
+    public void setSelect(boolean select) {
+        isSelect = select;
     }
 }

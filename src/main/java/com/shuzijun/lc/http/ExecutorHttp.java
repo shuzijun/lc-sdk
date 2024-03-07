@@ -38,5 +38,4 @@ public interface ExecutorHttp {
      */
     public HttpResponse executePut(HttpRequest httpRequest) throws LcException;
 
-
 }

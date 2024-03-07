@@ -4,6 +4,9 @@ package com.shuzijun.lc.model;
 import com.alibaba.fastjson2.annotation.JSONField;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class QuestionView {
     private String title;
     private String titleCn;
@@ -29,6 +32,8 @@ public class QuestionView {
     private String category;
 
     private boolean paidOnly;
+
+    private String solutionNum;
 
     public QuestionView() {
     }
@@ -189,4 +194,44 @@ public class QuestionView {
     public void setPaidOnly(boolean paidOnly) {
         this.paidOnly = paidOnly;
     }
+
+    public String getSolutionNum() {
+        return solutionNum;
+    }
+
+    public void setSolutionNum(String solutionNum) {
+        this.solutionNum = solutionNum;
+    }
+
+    private static Map<Character, Integer> SORT = new HashMap<>();
+
+    static {
+        String sortStr = "剑面";
+        for (int i = 0; i < sortStr.length(); i++) {
+            SORT.put(sortStr.charAt(i), i);
+        }
+    }
+
+    public int frontendQuestionIdCompareTo(QuestionView questionView) {
+        Integer i1 = SORT.get(frontendQuestionId.charAt(0));
+        Integer i2 = SORT.get(questionView.frontendQuestionId.charAt(0));
+        if (i1 != null && i2 != null) {
+            if (i1 != i2) {
+                return i1.compareTo(i2);
+            }else {
+                return frontendQuestionId.compareTo(questionView.frontendQuestionId);
+            }
+        } else if (i1 != null) {
+            return 1;
+        } else if (i2 != null) {
+            return -1;
+        }
+        if (frontendQuestionId.length() != questionView.frontendQuestionId.length()) {
+            return frontendQuestionId.length() - questionView.frontendQuestionId.length();
+        }
+
+        return frontendQuestionId.compareTo(questionView.frontendQuestionId);
+
+    }
+
 }

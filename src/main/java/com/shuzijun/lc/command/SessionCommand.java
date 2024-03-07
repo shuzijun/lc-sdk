@@ -23,8 +23,8 @@ public class SessionCommand {
      * @param userSlug {@link SiteEnum#CN}需要此参数，来自{@link User#getUserSlug()}
      * @return {@link List<Session>} session列表
      */
-    public static SessionListCommand buildSessionListCommand(String userSlug) {
-        return new SessionListCommand(userSlug);
+    public static SessionListCommand buildSessionListCommand(String userSlug,Option<?> ...option) {
+        return new SessionListCommand(userSlug,option);
     }
 
     /**
@@ -33,22 +33,23 @@ public class SessionCommand {
      * @param sessionId 来自{@link Session#getId()}
      * @return {@link Boolean} 是否切换成功
      */
-    public static SwitchSession buildSwitchSession(Integer sessionId) {
-        return new SwitchSession(sessionId);
+    public static SwitchSession buildSwitchSession(Integer sessionId,Option<?> ...option) {
+        return new SwitchSession(sessionId,option);
     }
 
-    public static class SessionListCommand implements Command<List<Session>> {
+    public static class SessionListCommand extends OptionCommand implements Command<List<Session>> {
 
         private final String userSlug;
 
-        public SessionListCommand(String userSlug) {
+        public SessionListCommand(String userSlug,Option<?>...option) {
+            super(option);
             this.userSlug = userSlug;
         }
 
 
         @Override
         public List<Session> execute(HttpClient client) throws LcException {
-            HttpResponse httpResponse = HttpRequest.builderGet(client.getProgress()).addHeader(client.getHeader()).request(client.getExecutorHttp());
+            HttpResponse httpResponse = HttpRequest.builderGet(client.getProgress()).addHeader(client.getHeader()).addOption(getOptions()).request(client.getExecutorHttp());
             if (httpResponse.isCodeSuccess() && StringUtils.isNotBlank(httpResponse.getBody())) {
 
                 JSONObject jsonObject = JSON.parseObject(httpResponse.getBody());
@@ -99,11 +100,12 @@ public class SessionCommand {
         }
     }
 
-    public static class SwitchSession implements Command<Boolean> {
+    public static class SwitchSession extends OptionCommand implements Command<Boolean> {
 
         private final Integer sessionId;
 
-        public SwitchSession(Integer sessionId) {
+        public SwitchSession(Integer sessionId,Option<?> ...option) {
+            super(option);
             this.sessionId = sessionId;
         }
 
@@ -113,6 +115,7 @@ public class SessionCommand {
                     .addHeader(client.getHeader())
                     .addHeader("Accept", "application/json, text/javascript, */*; q=0.01")
                     .addHeader("x-requested-with", "XMLHttpRequest")
+                    .addOption(getOptions())
                     .body("{\"func\":\"activate\",\"target\":" + sessionId + "}")
                     .request(client.getExecutorHttp());
 

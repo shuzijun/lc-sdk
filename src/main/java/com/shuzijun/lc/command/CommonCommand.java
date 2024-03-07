@@ -18,8 +18,8 @@ public class CommonCommand {
      *
      * @return {@link Boolean} true 验证成功
      */
-    public static Verify buildVerify() {
-        return new Verify();
+    public static Verify buildVerify(Option<?>... option) {
+        return new Verify(option);
     }
 
     /**
@@ -27,8 +27,8 @@ public class CommonCommand {
      *
      * @return {@link Boolean} true 已登录
      */
-    public static CheckLogin buildCheckLogin() {
-        return new CheckLogin();
+    public static CheckLogin buildCheckLogin(Option<?>... option) {
+        return new CheckLogin(option);
     }
 
     /**
@@ -36,8 +36,8 @@ public class CommonCommand {
      *
      * @return {@link User} 用户信息
      */
-    public static GetUser buildGetUser() {
-        return new GetUser();
+    public static GetUser buildGetUser(Option<?>... option) {
+        return new GetUser(option);
     }
 
     /**
@@ -45,40 +45,47 @@ public class CommonCommand {
      *
      * @return {@link Checkin} 登录信息
      */
-    public static GetCheckin buildCheckin() {
-        return new GetCheckin();
+    public static GetCheckin buildCheckin(Option<?>... option) {
+        return new GetCheckin(option);
     }
 
 
-    public static class Verify implements Command<Boolean> {
+    public static class Verify extends OptionCommand implements Command<Boolean> {
+
+        public Verify(Option<?>... option) {
+            super(option);
+        }
+
         @Override
         public Boolean execute(HttpClient client) throws LcException {
-            return HttpRequest.builderGet(client.getVerify())
-                    .addHeader(client.getHeader())
-                    .request(client.getExecutorHttp())
-                    .isCodeSuccess();
+            return HttpRequest.builderGet(client.getVerify()).addHeader(client.getHeader()).addOption(getOptions()).request(client.getExecutorHttp()).isCodeSuccess();
         }
     }
 
-    public static class CheckLogin implements Command<Boolean> {
+    public static class CheckLogin extends OptionCommand implements Command<Boolean> {
+        public CheckLogin(Option<?>... option) {
+            super(option);
+        }
+
         @Override
         public Boolean execute(HttpClient client) throws LcException {
-            return HttpRequest.builderGet(client.getPoints()).addHeader(client.getHeader()).request(client.getExecutorHttp()).isCodeSuccess();
+            return HttpRequest.builderGet(client.getPoints()).addHeader(client.getHeader()).addOption(getOptions()).request(client.getExecutorHttp()).isCodeSuccess();
         }
     }
 
-    public static class GetUser implements Command<User> {
+    public static class GetUser extends OptionCommand implements Command<User> {
+
+        public GetUser(Option<?>... option) {
+            super(option);
+        }
+
         @Override
         public User execute(HttpClient client) throws LcException {
             HttpResponse response;
             if (client.isCn()) {
-                response = Graphql.builder(client.getGraphql() + "/noj-go").cn(client.isCn()).header(client.getHeader())
-                        .operationName("userStatus", "userStatusGlobal")
-                        .request(client.getExecutorHttp());
+                response = Graphql.builder(client.getGraphql() + "/noj-go").cn(client.isCn()).header(client.getHeader()).operationName("userStatus", "userStatusGlobal").addOption(getOptions()).request(client.getExecutorHttp());
             } else {
-                response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
-                        .operationName("userStatus", "globalData")
-                        .request(client.getExecutorHttp());
+                response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader()).operationName("userStatus", "globalData").addOption(getOptions()).request(client.getExecutorHttp());
             }
 
             if (response.isCodeSuccess()) {
@@ -107,13 +114,17 @@ public class CommonCommand {
         }
     }
 
-    public static class  GetCheckin implements Command<Checkin> {
+    public static class GetCheckin extends OptionCommand implements Command<Checkin> {
+
+        public GetCheckin(Option<?>... option) {
+            super(option);
+        }
 
         @Override
         public Checkin execute(HttpClient client) throws LcException {
             HttpResponse response = Graphql.builder(client.getGraphql()).operationName("checkin").header(client.getHeader()).request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
-               return  JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("checkin").to(Checkin.class);
+                return JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("checkin").to(Checkin.class);
             } else {
                 throw new LcException("checkin fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
             }

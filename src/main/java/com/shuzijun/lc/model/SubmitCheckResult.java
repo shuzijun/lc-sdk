@@ -2,6 +2,8 @@ package com.shuzijun.lc.model;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 
+import java.math.BigDecimal;
+
 public class SubmitCheckResult {
 
     private String state;
@@ -24,17 +26,17 @@ public class SubmitCheckResult {
     private String lastTestcase;
     private String memory;
     @JSONField(name = "memory_percentile")
-    private String memoryPercentile;
+    private BigDecimal memoryPercentile;
     @JSONField(name = "pretty_lang")
     private String prettyLang;
     @JSONField(name = "question_id")
     private String questionId;
     @JSONField(name = "run_success")
-    private String runSuccess;
+    private boolean runSuccess;
     @JSONField(name = "runtime_percentile")
-    private String runtimePercentile;
+    private BigDecimal runtimePercentile;
     @JSONField(name = "status_code")
-    private String statusCode;
+    private Integer statusCode;
     @JSONField(name = "status_memory")
     private String statusMemory;
     @JSONField(name = "status_msg")
@@ -61,6 +63,8 @@ public class SubmitCheckResult {
     private String input;
     @JSONField(name = "input_formatted")
     private String inputFormatted;
+    @JSONField(name = "full_runtime_error")
+    private String fullRuntimeError;
 
     public String getState() {
         return state;
@@ -150,11 +154,11 @@ public class SubmitCheckResult {
         this.memory = memory;
     }
 
-    public String getMemoryPercentile() {
+    public BigDecimal getMemoryPercentile() {
         return memoryPercentile;
     }
 
-    public void setMemoryPercentile(String memoryPercentile) {
+    public void setMemoryPercentile(BigDecimal memoryPercentile) {
         this.memoryPercentile = memoryPercentile;
     }
 
@@ -174,27 +178,27 @@ public class SubmitCheckResult {
         this.questionId = questionId;
     }
 
-    public String getRunSuccess() {
+    public boolean getRunSuccess() {
         return runSuccess;
     }
 
-    public void setRunSuccess(String runSuccess) {
+    public void setRunSuccess(boolean runSuccess) {
         this.runSuccess = runSuccess;
     }
 
-    public String getRuntimePercentile() {
+    public BigDecimal getRuntimePercentile() {
         return runtimePercentile;
     }
 
-    public void setRuntimePercentile(String runtimePercentile) {
+    public void setRuntimePercentile(BigDecimal runtimePercentile) {
         this.runtimePercentile = runtimePercentile;
     }
 
-    public String getStatusCode() {
+    public Integer getStatusCode() {
         return statusCode;
     }
 
-    public void setStatusCode(String statusCode) {
+    public void setStatusCode(Integer statusCode) {
         this.statusCode = statusCode;
     }
 
@@ -300,5 +304,13 @@ public class SubmitCheckResult {
 
     public void setInputFormatted(String inputFormatted) {
         this.inputFormatted = inputFormatted;
+    }
+
+    public String getFullRuntimeError() {
+        return fullRuntimeError;
+    }
+
+    public void setFullRuntimeError(String fullRuntimeError) {
+        this.fullRuntimeError = fullRuntimeError;
     }
 }
