@@ -16,7 +16,7 @@ public class HttpInterceptorTest implements HttpInterceptor {
     @Override
     public InterceptorResult preHandle(HttpRequest request) throws LcException {
         System.out.println("test http interceptor preHandle :"+ name);
-        return InterceptorResult.abort(new HttpResponse(200));
+        return InterceptorResult.continueWith();
     }
 
     @Override

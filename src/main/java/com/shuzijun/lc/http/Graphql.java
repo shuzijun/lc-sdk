@@ -47,7 +47,7 @@ public class Graphql {
 
     public static class GraphqlBuilder {
 
-        private static final String PATH = "/graphql/";
+        private static final String PATH = "/lc-sdk/graphql/";
 
         private static final String CNSUFFIX = "_cn.graphql";
 

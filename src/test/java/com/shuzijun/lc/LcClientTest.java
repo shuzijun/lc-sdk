@@ -21,7 +21,7 @@ public class LcClientTest {
 
     @BeforeClass
     public static void before() throws LcException {
-        lcClient = LcClient.builder(HttpClient.SiteEnum.EN).build();
+        lcClient = LcClient.builder(HttpClient.SiteEnum.CN).build();
         // 从环境变量中获取cookie
         cookie = System.getenv("LC_COOKIE");
         lcClient.invoker(CookieCommand.buildSetCookie(cookie));
@@ -176,10 +176,10 @@ public class LcClientTest {
 
         Tag favoriteTag = lists.stream().filter(tag -> !tag.getType().equals("leetcode_favorites")).findAny().orElse(null);
         if (favoriteTag != null) {
-            Boolean add = lcClient.invoker(FavoriteCommand.buildAddQuestionToFavorite(favoriteTag.getSlug(), "3"));
+            Boolean add = lcClient.invoker(FavoriteCommand.buildAddQuestionToFavorite(favoriteTag.getSlug(), "3")).isOk();
             Assert.assertTrue(add);
             System.out.println("add success");
-            Boolean rm = lcClient.invoker(FavoriteCommand.buildRemoveQuestionFromFavorite(favoriteTag.getSlug(), "3"));
+            Boolean rm = lcClient.invoker(FavoriteCommand.buildRemoveQuestionFromFavorite(favoriteTag.getSlug(), "3")).isOk();
             Assert.assertTrue(rm);
             System.out.println("rm success");
         }
