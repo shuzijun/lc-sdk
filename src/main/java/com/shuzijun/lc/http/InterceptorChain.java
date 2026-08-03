@@ -27,7 +27,7 @@ public class InterceptorChain {
                 return result.respond();
             }
             HttpResponse response = proceed(request);
-            currentInterceptor.postHandle(request, null);
+            currentInterceptor.postHandle(request, response);
 
             currentIndex--;
             return response;

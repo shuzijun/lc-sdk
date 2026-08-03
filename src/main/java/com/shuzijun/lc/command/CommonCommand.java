@@ -1,6 +1,7 @@
 package com.shuzijun.lc.command;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.shuzijun.lc.UserQueryMode;
 import com.shuzijun.lc.errors.LcException;
 import com.shuzijun.lc.http.Graphql;
 import com.shuzijun.lc.http.HttpClient;
@@ -37,7 +38,11 @@ public class CommonCommand {
      * @return {@link User} 用户信息
      */
     public static GetUser buildGetUser(Option<?>... option) {
-        return new GetUser(option);
+        return buildGetUser(UserQueryMode.SITE_DEFAULT, option);
+    }
+
+    public static GetUser buildGetUser(UserQueryMode mode, Option<?>... option) {
+        return new GetUser(mode, option);
     }
 
     /**
@@ -75,17 +80,25 @@ public class CommonCommand {
 
     public static class GetUser extends OptionCommand implements Command<User> {
 
+        private final UserQueryMode mode;
+
         public GetUser(Option<?>... option) {
+            this(UserQueryMode.SITE_DEFAULT, option);
+        }
+
+        public GetUser(UserQueryMode mode, Option<?>... option) {
             super(option);
+            this.mode = mode == null ? UserQueryMode.SITE_DEFAULT : mode;
         }
 
         @Override
         public User execute(HttpClient client) throws LcException {
             HttpResponse response;
-            if (client.isCn()) {
+            if (client.isCn() && mode == UserQueryMode.SITE_DEFAULT) {
                 response = Graphql.builder(client.getGraphql() + "/noj-go").cn(client.isCn()).header(client.getHeader()).operationName("userStatus", "userStatusGlobal").addOption(getOptions()).request(client.getExecutorHttp());
             } else {
-                response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader()).operationName("userStatus", "globalData").addOption(getOptions()).request(client.getExecutorHttp());
+                String operation = client.isCn() ? "userStatusGlobalData" : "userStatus";
+                response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader()).operationName(operation, "globalData").addOption(getOptions()).request(client.getExecutorHttp());
             }
 
             if (response.isCodeSuccess()) {

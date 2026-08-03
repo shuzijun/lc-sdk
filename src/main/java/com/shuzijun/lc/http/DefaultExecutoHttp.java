@@ -5,14 +5,8 @@ import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.HttpCookie;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,57 +27,24 @@ public class DefaultExecutoHttp implements ExecutorHttp {
 
     public OkHttpClient newDefaultHttpClient(
             long connectTimeout, long writeTimeout, long readTimeout) {
-
-        try {
-            // Create a trust manager that does not validate certificate chains
-            final TrustManager[] trustAllCerts = new TrustManager[] {
-                    new X509TrustManager() {
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        }
-
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return new X509Certificate[]{};
-                        }
+        return new OkHttpClient()
+                .newBuilder()
+                .connectTimeout(connectTimeout, TimeUnit.SECONDS)
+                .writeTimeout(writeTimeout, TimeUnit.SECONDS)
+                .readTimeout(readTimeout, TimeUnit.SECONDS)
+                .cookieJar(new CookieJar() {
+                    @Override
+                    public void saveFromResponse(@NotNull HttpUrl httpUrl, @NotNull List<Cookie> list) {
+                        cookieStore.addMyCookie(httpUrl.host(), list);
                     }
-            };
 
-            // Install the all-trusting trust manager
-            final SSLContext sslContext = SSLContext.getInstance("SSL");
-            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-
-            // Create an ssl socket factory with our all-trusting manager
-            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
-            OkHttpClient httpClient = new OkHttpClient()
-                    .newBuilder()
-                    .connectTimeout(connectTimeout, TimeUnit.SECONDS)
-                    .writeTimeout(writeTimeout, TimeUnit.SECONDS)
-                    .readTimeout(readTimeout, TimeUnit.SECONDS)
-                    .cookieJar(new CookieJar() {
-                        @Override
-                        public void saveFromResponse(@NotNull HttpUrl httpUrl, @NotNull List<Cookie> list) {
-                            cookieStore.addMyCookie(httpUrl.host(), list);
-                        }
-
-                        @NotNull
-                        @Override
-                        public List<Cookie> loadForRequest(@NotNull HttpUrl httpUrl) {
-                            return cookieStore.getMyCookie(httpUrl.host());
-                        }
-                    })
-                    .sslSocketFactory(sslSocketFactory, (X509TrustManager)trustAllCerts[0])
-                    .hostnameVerifier((hostname, session) -> true)
-                    .build();
-            return httpClient;
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
+                    @NotNull
+                    @Override
+                    public List<Cookie> loadForRequest(@NotNull HttpUrl httpUrl) {
+                        return cookieStore.getMyCookie(httpUrl.host());
+                    }
+                })
+                .build();
 
     }
 

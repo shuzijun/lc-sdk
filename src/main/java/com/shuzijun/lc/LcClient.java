@@ -22,6 +22,19 @@ public class LcClient {
         return new Builder(siteEnum);
     }
 
+    public static LcClient create(LcClientConfig config) {
+        if (config == null) {
+            throw new IllegalArgumentException("Config must not be null");
+        }
+        HttpClient.Builder builder = HttpClient.builder(config.getEndpoint().getSite())
+                .baseUrl(config.getEndpoint().getBaseUrl())
+                .addHeader(config.getDefaultHeaders());
+        if (config.getExecutorHttp() != null) {
+            builder.executorHttp(config.getExecutorHttp());
+        }
+        return new LcClient(builder.build());
+    }
+
     public HttpClient getClient() {
         return client;
     }
@@ -37,6 +50,10 @@ public class LcClient {
 
     public <T> T invoker(Command<T> command) throws LcException {
         return command.execute(client);
+    }
+
+    public LcApi api() {
+        return new LcApi(this);
     }
 
     public static final class Builder {

@@ -6,6 +6,7 @@ import com.shuzijun.lc.errors.LcException;
 import com.shuzijun.lc.http.Graphql;
 import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.http.HttpResponse;
+import com.shuzijun.lc.model.CodeMetaData;
 import com.shuzijun.lc.model.PageInfo;
 import com.shuzijun.lc.model.ProblemSetParam;
 import com.shuzijun.lc.model.Question;
@@ -153,7 +154,12 @@ public class QuestionCommand {
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 JSONObject jsonObject = JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("question");
-                return jsonObject.toJavaObject(Question.class);
+                Question question = jsonObject.toJavaObject(Question.class);
+                String metaData = jsonObject.getString("metaData");
+                if (StringUtils.isNotBlank(metaData)) {
+                    question.setCodeMetaData(JSONObject.parseObject(metaData, CodeMetaData.class));
+                }
+                return question;
             } else {
                 throw new LcException("GetQuestion fail", HttpClient.buildHttpTrace(response.getHttpRequest(), response));
             }

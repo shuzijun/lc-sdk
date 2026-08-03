@@ -31,6 +31,10 @@ public class CodeCommand {
         return new SubmitCheck(submissionId,option);
     }
 
+    public static SubmitCheck buildSubmitCheckById(String submissionId,Option<?> ...option) {
+        return new SubmitCheck(submissionId,option);
+    }
+
     /**
      * 运行代码
      *
@@ -44,7 +48,7 @@ public class CodeCommand {
     /**
      * 运行检查
      *
-     * @param interpretId 运行{@link #buildRunCode}返回的{@link RunCodeResult#getInterpretId()
+     * @param interpretId 运行{@link #buildRunCode}返回的{@link RunCodeResult#getInterpretId()}
      * @return {@link RunCodeResult } 运行结果
      */
     public static RunCodeCheck buildRunCodeCheck(String interpretId,Option<?> ...option) {
@@ -71,7 +75,7 @@ public class CodeCommand {
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 String body = response.getBody();
                 JSONObject returnObj = JSONObject.parseObject(body);
-                submitResult.setSubmissionId(returnObj.getInteger("submission_id"));
+                submitResult.setSubmissionIdValue(returnObj.getString("submission_id"));
             } else if (response.getStatusCode() == 429) {
                 //Code submitted. Please wait...
             } else {
@@ -83,9 +87,13 @@ public class CodeCommand {
 
     public static class SubmitCheck extends OptionCommand implements Command<SubmitCheckResult> {
 
-        private final Integer submissionId;
+        private final String submissionId;
 
         public SubmitCheck(Integer submissionId,Option<?> ...option) {
+            this(submissionId == null ? null : submissionId.toString(), option);
+        }
+
+        private SubmitCheck(String submissionId,Option<?> ...option) {
             super(option);
             this.submissionId = submissionId;
         }

@@ -7,6 +7,9 @@ public class RunCodeResult {
     @JSONField(name = "interpret_id")
     private String interpretId;
 
+    @JSONField(name = "interpret_expected_id")
+    private String expectedInterpretId;
+
     @JSONField(name = "test_case")
     private String testCase;
 
@@ -18,6 +21,14 @@ public class RunCodeResult {
 
     public void setInterpretId(String interpretId) {
         this.interpretId = interpretId;
+    }
+
+    public String getExpectedInterpretId() {
+        return expectedInterpretId;
+    }
+
+    public void setExpectedInterpretId(String expectedInterpretId) {
+        this.expectedInterpretId = expectedInterpretId;
     }
 
     public String getTestCase() {

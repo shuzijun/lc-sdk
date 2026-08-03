@@ -2,13 +2,16 @@ package com.shuzijun.lc.model;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RunCodeCheckResult {
 
     private String state;
     @JSONField(name = "code_answer")
-    private String codeAnswer;
+    private List<String> codeAnswers;
     @JSONField(name = "code_output")
-    private String codeOutput;
+    private List<String> codeOutputs;
     @JSONField(name = "elapsed_time")
     private String elapsedTime;
     @JSONField(name = "fast_submit")
@@ -55,7 +58,7 @@ public class RunCodeCheckResult {
     @JSONField(name = "display_runtime")
     private String displayRuntime;
     @JSONField(name = "expected_code_answer")
-    private String expectedCodeAnswer;
+    private List<String> expectedCodeAnswers;
     @JSONField(name = "expected_code_output")
     private String expectedCodeOutput;
     @JSONField(name = "expected_elapsed_time")
@@ -86,19 +89,35 @@ public class RunCodeCheckResult {
     }
 
     public String getCodeAnswer() {
-        return codeAnswer;
+        return firstValue(codeAnswers);
     }
 
     public void setCodeAnswer(String codeAnswer) {
-        this.codeAnswer = codeAnswer;
+        this.codeAnswers = singletonValue(codeAnswer);
+    }
+
+    public List<String> getCodeAnswers() {
+        return codeAnswers;
+    }
+
+    public void setCodeAnswers(List<String> codeAnswers) {
+        this.codeAnswers = codeAnswers;
     }
 
     public String getCodeOutput() {
-        return codeOutput;
+        return firstValue(codeOutputs);
     }
 
     public void setCodeOutput(String codeOutput) {
-        this.codeOutput = codeOutput;
+        this.codeOutputs = singletonValue(codeOutput);
+    }
+
+    public List<String> getCodeOutputs() {
+        return codeOutputs;
+    }
+
+    public void setCodeOutputs(List<String> codeOutputs) {
+        this.codeOutputs = codeOutputs;
     }
 
     public String getElapsedTime() {
@@ -286,11 +305,19 @@ public class RunCodeCheckResult {
     }
 
     public String getExpectedCodeAnswer() {
-        return expectedCodeAnswer;
+        return firstValue(expectedCodeAnswers);
     }
 
     public void setExpectedCodeAnswer(String expectedCodeAnswer) {
-        this.expectedCodeAnswer = expectedCodeAnswer;
+        this.expectedCodeAnswers = singletonValue(expectedCodeAnswer);
+    }
+
+    public List<String> getExpectedCodeAnswers() {
+        return expectedCodeAnswers;
+    }
+
+    public void setExpectedCodeAnswers(List<String> expectedCodeAnswers) {
+        this.expectedCodeAnswers = expectedCodeAnswers;
     }
 
     public String getExpectedCodeOutput() {
@@ -371,5 +398,18 @@ public class RunCodeCheckResult {
 
     public void setExpectedTaskName(String expectedTaskName) {
         this.expectedTaskName = expectedTaskName;
+    }
+
+    private static String firstValue(List<String> values) {
+        return values == null || values.isEmpty() ? null : values.get(0);
+    }
+
+    private static List<String> singletonValue(String value) {
+        if (value == null) {
+            return null;
+        }
+        List<String> values = new ArrayList<>(1);
+        values.add(value);
+        return values;
     }
 }

@@ -2,13 +2,17 @@ plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
+    id 'signing'
+    id 'com.vanniktech.maven.publish' version '0.36.0'
 }
 
 group 'com.shuzijun'
 version (System.getenv('LD_VERSION')==null ? project.sdkVersion :System.getenv('LD_VERSION'))
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
     mavenCentral()
@@ -22,14 +26,16 @@ dependencies {
 
     testImplementation "junit:junit:4.13.2"
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.8.2"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.8.2"
 }
 
 test {
     useJUnitPlatform()
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
+    options.release = 8
 }
 
 
@@ -44,21 +50,36 @@ publishing {
             }
         }
     }
-    publications {
-        gpr(MavenPublication) {
-            from(components.java)
-            pom({
-                name = 'lc-sdk'
-                packaging = 'jar'
-                url = 'https://github.com/shuzijun/lc-sdk'
+    publications.withType(MavenPublication).configureEach {
+        pom({
+            name = 'lc-sdk'
+            description = 'Typed and legacy-compatible LeetCode API SDK'
+            packaging = 'jar'
+            url = 'https://github.com/shuzijun/lc-sdk'
+            inceptionYear = '2023'
 
-                licenses {
-                    license {
-                        name = 'GNU GENERAL PUBLIC LICENSE Version 3'
-                        url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
-                    }
+            licenses {
+                license {
+                    name = 'GNU GENERAL PUBLIC LICENSE Version 3'
+                    url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
                 }
-            })
-        }
+            }
+            developers {
+                developer {
+                    id = 'shuzijun'
+                    email = 'shuzijun0109@gmail.com'
+                }
+            }
+            scm {
+                connection = 'scm:git:https://github.com/shuzijun/lc-sdk.git'
+                developerConnection = 'scm:git:https://github.com/shuzijun/lc-sdk.git'
+                url = 'https://github.com/shuzijun/lc-sdk'
+            }
+        })
     }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 }

@@ -15,7 +15,7 @@ public class FavoriteCommand {
     /**
      * 添加题目到收藏夹
      *
-     * @param favoriteIdHash {@link FindCommand.Lists#buildLists()}返回列表中{@link Tag#getSlug()}
+     * @param favoriteIdHash {@link FindCommand#buildLists(Option[])}返回列表中{@link Tag#getSlug()}
      * @param questionId     {@link Question#getQuestionId()} 题目id
      * @return {@link Boolean} 是否成功
      */
@@ -26,7 +26,7 @@ public class FavoriteCommand {
     /**
      * 从收藏夹移除题目
      *
-     * @param favoriteIdHash {@link FindCommand.Lists#buildLists()}返回列表中{@link Tag#getSlug()}
+     * @param favoriteIdHash {@link FindCommand#buildLists(Option[])}返回列表中{@link Tag#getSlug()}
      * @param questionId     {@link Question#getQuestionId()} 题目id
      * @return {@link Boolean} 是否成功
      */

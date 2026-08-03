@@ -1,6 +1,8 @@
 package com.shuzijun.lc.http;
 
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.HttpCookie;
 import java.util.HashMap;
 import java.util.Locale;
@@ -9,6 +11,7 @@ import java.util.Map;
 public class HttpClient {
 
     private static final String prefix = "https://";
+    private static final String login = "/accounts/login/";
     private static final String logout = "/accounts/logout/";
     private static final String all = "/api/problems/all/";
     private static final String graphql = "/graphql";
@@ -26,19 +29,28 @@ public class HttpClient {
      * 网站地址
      */
     private final String endpoint;
+    private final String baseUrl;
     /**
      * 站点类型
      */
     private final int site;
+    private final Map<String, String> defaultHeaders;
     /**
      * 请求执行器
      */
     private final ExecutorHttp executorHttp;
 
-    private HttpClient(String endpoint, int site, ExecutorHttp executorHttp) {
+    private HttpClient(
+            String endpoint,
+            String baseUrl,
+            int site,
+            ExecutorHttp executorHttp,
+            Map<String, String> defaultHeaders) {
         this.endpoint = endpoint;
+        this.baseUrl = baseUrl;
         this.site = site;
         this.executorHttp = executorHttp;
+        this.defaultHeaders = new HashMap<>(defaultHeaders);
     }
 
     public static String buildHttpTrace(HttpRequest httpRequest, HttpResponse httpResponse) {
@@ -78,11 +90,15 @@ public class HttpClient {
     }
 
     public String getUrl() {
-        return prefix + getEndpoint();
+        return baseUrl == null ? prefix + getEndpoint() : baseUrl;
     }
 
     public String getLogout() {
         return getUrl() + logout;
+    }
+
+    public String getLogin() {
+        return getUrl() + login;
     }
 
     public String getAll() {
@@ -155,6 +171,7 @@ public class HttpClient {
         header.putIfAbsent("Accept", "*/*");
         header.putIfAbsent("Accept-Language", Locale.getDefault().getLanguage() + "_" + Locale.getDefault().getCountry());
         header.putIfAbsent("origin", getUrl());
+        header.putAll(defaultHeaders);
 
         HttpCookie csrfTokenCookie = cookieStore().getCookie(getEndpoint(), "csrftoken");
         if (csrfTokenCookie != null) {
@@ -184,6 +201,7 @@ public class HttpClient {
          * 网站地址
          */
         private String endpoint;
+        private String baseUrl;
 
         /**
          * 中国站
@@ -193,6 +211,7 @@ public class HttpClient {
          * 请求执行器
          */
         private ExecutorHttp executorHttp;
+        private final Map<String, String> defaultHeaders = new HashMap<>();
 
         public Builder(SiteEnum siteEnum) {
             this.site = siteEnum.code;
@@ -201,6 +220,17 @@ public class HttpClient {
 
         public Builder endpoint(String endpoint) {
             this.endpoint = endpoint;
+            this.baseUrl = null;
+            return this;
+        }
+
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = normalizeBaseUrl(baseUrl);
+            try {
+                this.endpoint = new URI(this.baseUrl).getHost();
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Invalid base URL: " + baseUrl, e);
+            }
             return this;
         }
 
@@ -209,13 +239,49 @@ public class HttpClient {
             return this;
         }
 
+        public Builder addHeader(String name, String value) {
+            if (name == null || value == null) {
+                throw new IllegalArgumentException("Header name and value must not be null");
+            }
+            defaultHeaders.put(name, value);
+            return this;
+        }
+
+        public Builder addHeader(Map<String, String> headers) {
+            if (headers != null) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    addHeader(entry.getKey(), entry.getValue());
+                }
+            }
+            return this;
+        }
+
         public HttpClient build() {
             if (executorHttp == null) {
                 executorHttp = new DefaultExecutoHttp();
             }
-            return new HttpClient(endpoint, site, executorHttp);
+            return new HttpClient(endpoint, baseUrl, site, executorHttp, defaultHeaders);
         }
 
+        private static String normalizeBaseUrl(String baseUrl) {
+            if (baseUrl == null) {
+                throw new IllegalArgumentException("Base URL must not be null");
+            }
+            String normalized = baseUrl.trim();
+            while (normalized.endsWith("/")) {
+                normalized = normalized.substring(0, normalized.length() - 1);
+            }
+            try {
+                URI uri = new URI(normalized);
+                if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
+                        || uri.getHost() == null) {
+                    throw new IllegalArgumentException("Base URL must be an absolute HTTP(S) URL: " + baseUrl);
+                }
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Invalid base URL: " + baseUrl, e);
+            }
+            return normalized;
+        }
     }
 
 }

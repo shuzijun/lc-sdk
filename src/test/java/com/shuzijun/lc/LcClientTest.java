@@ -8,6 +8,7 @@ import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.model.*;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,6 +22,8 @@ public class LcClientTest {
 
     @BeforeClass
     public static void before() throws LcException {
+        Assume.assumeTrue("Live tests require LC_LIVE_TESTS=true",
+                Boolean.parseBoolean(System.getenv("LC_LIVE_TESTS")));
         lcClient = LcClient.builder(HttpClient.SiteEnum.CN).build();
         // 从环境变量中获取cookie
         cookie = System.getenv("LC_COOKIE");

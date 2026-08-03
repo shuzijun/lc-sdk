@@ -1,7 +1,4 @@
-# This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java#publishing-using-gradle
-
-name: Gradle Package
+name: Release
 
 on:
   workflow_dispatch:
@@ -9,70 +6,119 @@ on:
       version:
         description: 'Release version'
         required: true
+        type: string
   push:
     tags:
       - 'v*.*'
 
-jobs:
+permissions:
+  contents: write
+  packages: write
 
-  build:
-    runs-on: ubuntu-latest
+jobs:
+  quality-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
 
     steps:
-    - name: Set LD_VERSION
-      if: ${{ github.event_name == 'push'}}
-      run: echo "LD_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-    - name: Set LD_VERSION
-      if: ${{ github.event_name == 'workflow_dispatch'}}
-      run: echo "LD_VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+    - name: Checkout
+      uses: actions/checkout@v4
 
-
-    - uses: actions/checkout@v2
-
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: '8' # The JDK version to make available on the path.
-        java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-        architecture: x64 # (x64 or x86) - defaults to x64
-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-
-    - name: Build with Gradle
-      run: |
-           ./gradlew clean
-           ./gradlew build
+    - name: Resolve release version
+      id: version
+      shell: bash
       env:
-        LD_VERSION: ${{ env.LD_VERSION }}
+        DISPATCH_VERSION: ${{ inputs.version }}
+      run: |
+        if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+          version="${GITHUB_REF_NAME#v}"
+        else
+          version="${DISPATCH_VERSION#v}"
+        fi
+        if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+          echo "::error::Invalid release version: ${version}"
+          exit 1
+        fi
+        echo "version=${version}" >> "${GITHUB_OUTPUT}"
+        echo "tag=v${version}" >> "${GITHUB_OUTPUT}"
+
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '25'
+        cache: gradle
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Run SDK quality gate
+      run: ./gradlew clean test build --no-daemon --stacktrace
+      env:
+        LD_VERSION: ${{ steps.version.outputs.version }}
+
+    - name: Upload quality gate reports
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sdk-quality-gate-reports-${{ steps.version.outputs.version }}
+        path: |
+          build/reports/
+          build/test-results/
+        if-no-files-found: warn
+        retention-days: 7
+
+  release:
+    needs: quality-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '25'
+        cache: gradle
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Publish to GitHub Packages
-      run: |
-           ./gradlew clean
-           ./gradlew publish
+      run: ./gradlew publishAllPublicationsToGitHubPackagesRepository --no-daemon --stacktrace
       env:
-        LD_VERSION: ${{ env.LD_VERSION }}
+        LD_VERSION: ${{ needs.quality-gate.outputs.version }}
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.PKG_TOKEN }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    - name: Publish to Maven Central
+      run: ./gradlew publishAndReleaseToMavenCentral --no-daemon --stacktrace
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        LD_VERSION: ${{ needs.quality-gate.outputs.version }}
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+
+    - name: Create draft GitHub release
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ env.LD_VERSION }}
-        release_name: v${{ env.LD_VERSION }}
+        tag_name: ${{ needs.quality-gate.outputs.tag }}
+        name: ${{ needs.quality-gate.outputs.tag }}
         draft: true
-        prerelease: false
-
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: ./build/libs/lc-sdk-${{ env.LD_VERSION }}.jar
-        asset_name: lc-sdk-${{ env.LD_VERSION }}.jar
-        asset_content_type: application/java-archive
+        prerelease: ${{ contains(needs.quality-gate.outputs.version, '-') }}
+        files: |
+          build/libs/lc-sdk-${{ needs.quality-gate.outputs.version }}.jar
+          build/libs/lc-sdk-${{ needs.quality-gate.outputs.version }}-sources.jar
+          build/libs/lc-sdk-${{ needs.quality-gate.outputs.version }}-javadoc.jar
+        fail_on_unmatched_files: true

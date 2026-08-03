@@ -15,19 +15,23 @@ Java 1.8或更高版本:
 <dependency>
     <groupId>com.shuzijun</groupId>
     <artifactId>lc-sdk</artifactId>
-    <!-- 最新版本号 -->
-    <version>x.x.x</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
 ## 使用gradle
 
-```
+```groovy
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-    // 最新版本号
-    implementation("com.shuzijun:lc-sdk:x.x.x")
+    implementation("com.shuzijun:lc-sdk:0.0.4")
 }
 ```
+
+如果需要使用 GitHub Packages，需要额外配置 `https://maven.pkg.github.com/shuzijun/lc-sdk` 仓库和具备 `read:packages` 权限的凭据。公开依赖建议优先使用 Maven Central。
 
 ## 直接下载JAR
 

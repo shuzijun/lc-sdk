@@ -64,6 +64,7 @@ public class SessionCommand {
                             .header(client.getHeader())
                             .operationName("userSessionProgress")
                             .variables("userSlug", userSlug)
+                            .addOption(getOptions())
                             .request(client.getExecutorHttp());
                     if (sessionHttpResponse.isCodeSuccess() && StringUtils.isNotBlank(sessionHttpResponse.getBody())) {
                         JSONObject questionProgressObject = JSON.parseObject(sessionHttpResponse.getBody()).getJSONObject("data").getJSONObject("userProfileUserQuestionProgress");

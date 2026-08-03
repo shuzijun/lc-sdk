@@ -112,6 +112,7 @@ public class SubmissionCommand {
             } else {
                 HttpResponse response = Graphql.builder(client.getGraphql()).header(client.getHeader())
                         .operationName("submissionDetail", "submissionDetails").variables("id", submissionId)
+                        .addOption(getOptions())
                         .request(client.getExecutorHttp());
                 if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                     String body = response.getBody();

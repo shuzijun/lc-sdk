@@ -20,6 +20,12 @@ public class Question extends QuestionView {
      */
     private List<CodeSnippet> codeSnippets;
 
+    private List<Tag> topicTags;
+
+    private Integer likes;
+
+    private Integer dislikes;
+
     private String solution;
 
     /**
@@ -86,6 +92,30 @@ public class Question extends QuestionView {
 
     public void setCodeSnippets(List<CodeSnippet> codeSnippets) {
         this.codeSnippets = codeSnippets;
+    }
+
+    public List<Tag> getTopicTags() {
+        return topicTags;
+    }
+
+    public void setTopicTags(List<Tag> topicTags) {
+        this.topicTags = topicTags;
+    }
+
+    public Integer getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Integer likes) {
+        this.likes = likes;
+    }
+
+    public Integer getDislikes() {
+        return dislikes;
+    }
+
+    public void setDislikes(Integer dislikes) {
+        this.dislikes = dislikes;
     }
 
     public String getSimilarQuestions() {
