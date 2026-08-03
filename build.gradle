@@ -40,16 +40,6 @@ tasks.withType(JavaCompile).configureEach {
 
 
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/shuzijun/lc-sdk")
-            credentials {
-                username =  System.getenv("USERNAME")
-                password =  System.getenv("TOKEN")
-            }
-        }
-    }
     publications.withType(MavenPublication).configureEach {
         pom({
             name = 'lc-sdk'
