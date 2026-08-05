@@ -13,6 +13,9 @@ import com.shuzijun.lc.command.SolutionCommand;
 import com.shuzijun.lc.command.SubmissionCommand;
 import com.shuzijun.lc.errors.LcException;
 import com.shuzijun.lc.model.FavoriteResult;
+import com.shuzijun.lc.model.Checkin;
+import com.shuzijun.lc.model.CodeExecutionResult;
+import com.shuzijun.lc.model.CodeStartResult;
 import com.shuzijun.lc.model.NoteUpdateResult;
 import com.shuzijun.lc.model.PageInfo;
 import com.shuzijun.lc.model.ProblemSetParam;
@@ -31,6 +34,8 @@ import com.shuzijun.lc.model.SubmitResult;
 import com.shuzijun.lc.model.Tag;
 import com.shuzijun.lc.model.User;
 
+import java.net.HttpCookie;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class LcApi {
@@ -132,8 +137,46 @@ public final class LcApi {
             return client.invoker(LoginCommand.buildLogin(username, password, csrfToken, context(context)));
         }
 
+        public Checkin checkin(RequestContext context) throws LcException {
+            return client.invoker(CommonCommand.buildCheckin(context(context)));
+        }
+
         public void setCookie(String cookie, RequestContext context) throws LcException {
             client.invoker(CookieCommand.buildSetCookie(cookie, context(context)));
+        }
+
+        public void setCookies(List<HttpCookie> cookies, RequestContext context) throws LcException {
+            context(context);
+            String endpoint = client.getClient().getEndpoint();
+            List<HttpCookie> normalized = new ArrayList<>();
+            if (cookies != null) {
+                for (HttpCookie cookie : cookies) {
+                    if (cookie == null) {
+                        continue;
+                    }
+                    HttpCookie copy = new HttpCookie(cookie.getName(), cookie.getValue());
+                    copy.setDomain(cookie.getDomain() == null ? endpoint : cookie.getDomain());
+                    copy.setPath(cookie.getPath() == null ? "/" : cookie.getPath());
+                    copy.setMaxAge(cookie.getMaxAge());
+                    copy.setSecure(cookie.getSecure());
+                    copy.setHttpOnly(cookie.isHttpOnly());
+                    copy.setVersion(cookie.getVersion());
+                    normalized.add(copy);
+                }
+            }
+            client.getClient().cookieStore().setCookie(endpoint, normalized);
+        }
+
+        public List<HttpCookie> cookies(RequestContext context) throws LcException {
+            context(context);
+            return client.getClient().cookieStore().getCookies(client.getClient().getEndpoint());
+        }
+
+        public String csrfToken(RequestContext context) throws LcException {
+            context(context);
+            HttpCookie cookie = client.getClient().cookieStore()
+                    .getCookie(client.getClient().getEndpoint(), "csrftoken");
+            return cookie == null ? null : cookie.getValue();
         }
 
         public void logout(RequestContext context) throws LcException {
@@ -146,12 +189,24 @@ public final class LcApi {
             return client.invoker(CodeCommand.buildRunCode(param, context(context)));
         }
 
+        public CodeStartResult startRun(RunCodeParam param, RequestContext context) throws LcException {
+            return CodeStartResult.fromRun(run(param, context));
+        }
+
         public RunCodeCheckResult runResult(String interpretId, RequestContext context) throws LcException {
             return client.invoker(CodeCommand.buildRunCodeCheck(interpretId, context(context)));
         }
 
+        public CodeExecutionResult checkRun(String interpretId, RequestContext context) throws LcException {
+            return CodeExecutionResult.fromRun(runResult(interpretId, context));
+        }
+
         public SubmitResult submit(SubmitParam param, RequestContext context) throws LcException {
             return client.invoker(CodeCommand.buildSubmitCode(param, context(context)));
+        }
+
+        public CodeStartResult startSubmit(SubmitParam param, RequestContext context) throws LcException {
+            return CodeStartResult.fromSubmit(submit(param, context));
         }
 
         public SubmitCheckResult submitResult(Integer submissionId, RequestContext context) throws LcException {
@@ -160,6 +215,10 @@ public final class LcApi {
 
         public SubmitCheckResult submitResultById(String submissionId, RequestContext context) throws LcException {
             return client.invoker(CodeCommand.buildSubmitCheckById(submissionId, context(context)));
+        }
+
+        public CodeExecutionResult checkSubmit(String submissionId, RequestContext context) throws LcException {
+            return CodeExecutionResult.fromSubmit(submitResultById(submissionId, context));
         }
     }
 
@@ -209,6 +268,20 @@ public final class LcApi {
     public final class Solutions {
         public List<Solution> list(String titleSlug, RequestContext context) throws LcException {
             return client.invoker(SolutionCommand.buildSolutionList(titleSlug, context(context)));
+        }
+
+        public List<Solution> list(
+                String titleSlug,
+                int first,
+                int skip,
+                RequestContext context
+        ) throws LcException {
+            return client.invoker(SolutionCommand.buildSolutionList(
+                    first,
+                    skip,
+                    titleSlug,
+                    context(context)
+            ));
         }
 
         public String article(String articleSlug, RequestContext context) throws LcException {

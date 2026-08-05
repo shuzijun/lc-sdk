@@ -8,6 +8,9 @@ import com.shuzijun.lc.http.HttpClient;
 import com.shuzijun.lc.http.HttpRequest;
 import com.shuzijun.lc.http.HttpResponse;
 import com.shuzijun.lc.model.PageInfo;
+import com.shuzijun.lc.model.Checkin;
+import com.shuzijun.lc.model.CodeExecutionResult;
+import com.shuzijun.lc.model.CodeStartResult;
 import com.shuzijun.lc.model.FavoriteResult;
 import com.shuzijun.lc.model.NoteUpdateResult;
 import com.shuzijun.lc.model.ProblemSetParam;
@@ -17,6 +20,7 @@ import com.shuzijun.lc.model.RunCodeCheckResult;
 import com.shuzijun.lc.model.RunCodeParam;
 import com.shuzijun.lc.model.RunCodeResult;
 import com.shuzijun.lc.model.Session;
+import com.shuzijun.lc.model.Solution;
 import com.shuzijun.lc.model.Submission;
 import com.shuzijun.lc.model.SubmissionDetail;
 import com.shuzijun.lc.model.SubmitCheckResult;
@@ -31,6 +35,7 @@ import org.junit.Test;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
+import java.net.HttpCookie;
 
 public class LcApiTest {
 
@@ -62,6 +67,7 @@ public class LcApiTest {
         QueueExecutor executor = new QueueExecutor();
         executor.add(new HttpResponse(200, "{\"form\":{\"errors\":[]}}"));
         executor.add(new HttpResponse(200, "{\"form\":{\"errors\":[\"bad password\"]}}"));
+        executor.add(new HttpResponse(200, "<html>unexpected response</html>"));
         LcClient client = client(HttpClient.SiteEnum.CN, executor);
 
         LoginCommand.LoginResult success = client.api().account()
@@ -74,6 +80,12 @@ public class LcApiTest {
         LoginCommand.LoginResult failure = client.api().account()
                 .login("user@example.com", "wrong", "csrf", RequestContext.DEFAULT);
         Assert.assertFalse(failure.isSuccess());
+        Assert.assertEquals("bad password", failure.getErrors().get(0));
+
+        LoginCommand.LoginResult unexpected = client.api().account()
+                .login("user@example.com", "secret", "csrf", RequestContext.DEFAULT);
+        Assert.assertFalse(unexpected.isSuccess());
+        Assert.assertTrue(unexpected.getErrors().isEmpty());
     }
 
     @Test
@@ -85,6 +97,48 @@ public class LcApiTest {
                 .login("user@example.com", "secret", "csrf", null);
 
         Assert.assertFalse(result.isSuccess());
+        Assert.assertNull(executor.lastRequest);
+    }
+
+    @Test
+    public void testAccount_checkinAppliesRequestContext() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"checkin\":{\"ok\":true,\"error\":null}}}"));
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+
+        Checkin checkin = client.api().account().checkin(
+                RequestContext.builder().header("X-Checkin-Test", "context").build()
+        );
+
+        Assert.assertTrue(checkin.isOk());
+        Assert.assertNull(checkin.getError());
+        Assert.assertEquals("context", executor.lastRequest.getHeader().get("X-Checkin-Test"));
+        Assert.assertEquals(
+                "checkin",
+                JSONObject.parseObject(executor.lastRequest.getBody()).getString("operationName")
+        );
+    }
+
+    @Test
+    public void testAccount_cancelledCheckinDoesNotInvokeTransport() {
+        QueueExecutor executor = new QueueExecutor();
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+        RequestContext cancelled = RequestContext.builder()
+                .cancellationToken(new CancellationToken() {
+                    @Override
+                    public boolean isCancellationRequested() {
+                        return true;
+                    }
+                })
+                .build();
+
+        try {
+            client.api().account().checkin(cancelled);
+            Assert.fail("Expected cancellation");
+        } catch (LcException expected) {
+            Assert.assertEquals("Request cancelled", expected.getMessage());
+        }
         Assert.assertNull(executor.lastRequest);
     }
 
@@ -200,6 +254,24 @@ public class LcApiTest {
     }
 
     @Test
+    public void testQuestions_allMapsTranslatedTitleAndPaidOnly() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"allQuestions\":[{"
+                        + "\"questionId\":\"1\",\"frontendQuestionId\":\"1\","
+                        + "\"title\":\"Two Sum\",\"titleCn\":\"两数之和\","
+                        + "\"titleSlug\":\"two-sum\",\"difficulty\":\"Easy\","
+                        + "\"isPaidOnly\":true,\"status\":\"NOT_STARTED\"}]}}"));
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+
+        List<QuestionView> questions = client.api().questions().all(RequestContext.DEFAULT);
+
+        Assert.assertEquals(1, questions.size());
+        Assert.assertEquals("两数之和", questions.get(0).getTitleCn());
+        Assert.assertTrue(questions.get(0).isPaidOnly());
+    }
+
+    @Test
     public void testCode_runAndChecksPreserveTypedIdsAndArrayResults() throws LcException {
         QueueExecutor executor = new QueueExecutor();
         executor.add(new HttpResponse(200,
@@ -291,6 +363,49 @@ public class LcApiTest {
     }
 
     @Test
+    public void testCode_checkRunAndSubmitReturnUnifiedResults() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"state\":\"SUCCESS\",\"run_success\":true,"
+                        + "\"code_answer\":[\"[0,1]\"],\"code_output\":[\"stdout\"],"
+                        + "\"expected_code_answer\":[\"[0,1]\"],"
+                        + "\"status_msg\":\"Accepted\",\"full_runtime_error\":null}"));
+        executor.add(new HttpResponse(200,
+                "{\"state\":\"SUCCESS\",\"run_success\":true,\"status_code\":10,"
+                        + "\"status_runtime\":\"1 ms\",\"runtime_percentile\":50.25,"
+                        + "\"status_memory\":\"10 MB\",\"memory_percentile\":60.75,"
+                        + "\"input\":\"[2,7]\\n9\",\"code_output\":\"[0,1]\","
+                        + "\"expected_output\":\"[0,1]\",\"std_output\":\"stdout\","
+                        + "\"last_testcase\":\"[2,7]\\n9\",\"status_msg\":\"Accepted\"}"));
+        LcClient client = client(HttpClient.SiteEnum.EN, executor);
+
+        CodeExecutionResult run = client.api().code()
+                .checkRun("run-1", RequestContext.DEFAULT);
+        CodeExecutionResult submit = client.api().code()
+                .checkSubmit("submit-1", RequestContext.DEFAULT);
+
+        Assert.assertTrue(run.isComplete());
+        Assert.assertTrue(run.isRunSuccess());
+        Assert.assertEquals("[0,1]", run.getCodeAnswers().get(0));
+        Assert.assertEquals("stdout", run.getCodeOutputs().get(0));
+        Assert.assertEquals("[0,1]", run.getExpectedCodeAnswers().get(0));
+        Assert.assertEquals("Accepted", run.getStatusMessage());
+
+        Assert.assertTrue(submit.isComplete());
+        Assert.assertTrue(submit.isRunSuccess());
+        Assert.assertEquals(Integer.valueOf(10), submit.getStatusCode());
+        Assert.assertEquals("1 ms", submit.getStatusRuntime());
+        Assert.assertEquals("50.25", submit.getRuntimePercentile().toPlainString());
+        Assert.assertEquals("10 MB", submit.getStatusMemory());
+        Assert.assertEquals("60.75", submit.getMemoryPercentile().toPlainString());
+        Assert.assertEquals("[2,7]\n9", submit.getInput());
+        Assert.assertEquals("[0,1]", submit.getCodeOutput());
+        Assert.assertEquals("[0,1]", submit.getExpectedOutput());
+        Assert.assertEquals("stdout", submit.getStandardOutput());
+        Assert.assertEquals("[2,7]\n9", submit.getLastTestCase());
+    }
+
+    @Test
     public void testCode_rateLimitReturnsTypedStartStatus() throws LcException {
         QueueExecutor executor = new QueueExecutor();
         executor.add(new HttpResponse(429, ""));
@@ -310,6 +425,112 @@ public class LcApiTest {
         Assert.assertNull(run.getInterpretId());
         Assert.assertEquals(Integer.valueOf(429), submit.getHttpStatueCode());
         Assert.assertNull(submit.getSubmissionIdValue());
+    }
+
+    @Test
+    public void testCode_startRunAndSubmitPreserveTypedStartFields() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"interpret_id\":\"run-1\",\"interpret_expected_id\":\"expected-1\","
+                        + "\"test_case\":\"[2,7]\\n9\"}"));
+        executor.add(new HttpResponse(200, "{\"submission_id\":\"submit-opaque\"}"));
+        LcClient client = client(HttpClient.SiteEnum.EN, executor);
+
+        CodeStartResult run = client.api().code().startRun(
+                new RunCodeParam("1", "two-sum", "[2,7]\n9", "java", "code"),
+                RequestContext.DEFAULT
+        );
+        CodeStartResult submit = client.api().code().startSubmit(
+                new SubmitParam("code", "java", "two-sum", "1"),
+                RequestContext.DEFAULT
+        );
+
+        Assert.assertEquals(200, run.getStatusCode());
+        Assert.assertEquals("run-1", run.getId());
+        Assert.assertEquals("expected-1", run.getExpectedId());
+        Assert.assertEquals("[2,7]\n9", run.getTestCase());
+        Assert.assertEquals(200, submit.getStatusCode());
+        Assert.assertEquals("submit-opaque", submit.getId());
+        Assert.assertNull(submit.getExpectedId());
+    }
+
+    @Test
+    public void testAccount_cookieAccessDoesNotExposeTransport() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+        HttpCookie session = new HttpCookie("LEETCODE_SESSION", "session=value");
+        session.setDomain("leetcode.cn");
+        session.setPath("/");
+        HttpCookie csrf = new HttpCookie("csrftoken", "csrf-value");
+        csrf.setDomain("leetcode.cn");
+        csrf.setPath("/");
+
+        client.api().account().setCookies(
+                java.util.Arrays.asList(session, csrf),
+                RequestContext.DEFAULT
+        );
+
+        Assert.assertEquals(2, client.api().account().cookies(RequestContext.DEFAULT).size());
+        Assert.assertEquals(
+                "csrf-value",
+                client.api().account().csrfToken(RequestContext.DEFAULT)
+        );
+        Assert.assertNull(executor.lastRequest);
+    }
+
+    @Test
+    public void testAccount_setCookiesNormalizesMissingDomainAndPath() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        LcClient client = client(HttpClient.SiteEnum.EN, executor);
+        HttpCookie csrf = new HttpCookie("csrftoken", "csrf-value");
+
+        client.api().account().setCookies(
+                java.util.Collections.singletonList(csrf),
+                RequestContext.DEFAULT
+        );
+
+        Assert.assertEquals(
+                "csrf-value",
+                client.api().account().csrfToken(RequestContext.DEFAULT)
+        );
+        Assert.assertNull(csrf.getDomain());
+        Assert.assertNull(csrf.getPath());
+    }
+
+    @Test
+    public void testSolutions_pagedListAndArticlePreserveRequestContract() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"questionSolutionArticles\":{\"edges\":[{\"node\":{"
+                        + "\"title\":\"Hash Map\",\"slug\":\"hash-map\",\"summary\":\"Use a map\","
+                        + "\"tags\":[{\"name\":\"Array\"},{\"name\":\"Hash Table\"}]}}]}}}"));
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"solutionArticle\":{\"content\":\"article body\"}}}"));
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+        RequestContext context = RequestContext.builder()
+                .header("X-Solution-Test", "solution")
+                .build();
+
+        List<Solution> solutions = client.api().solutions()
+                .list("two-sum", 30, 60, context);
+
+        JSONObject listRequest = JSONObject.parseObject(executor.lastRequest.getBody());
+        Assert.assertEquals("questionSolutionArticles", listRequest.getString("operationName"));
+        Assert.assertEquals("two-sum",
+                listRequest.getJSONObject("variables").getString("questionSlug"));
+        Assert.assertEquals(30, listRequest.getJSONObject("variables").getIntValue("first"));
+        Assert.assertEquals(60, listRequest.getJSONObject("variables").getIntValue("skip"));
+        Assert.assertEquals("solution", executor.lastRequest.getHeader().get("X-Solution-Test"));
+        Assert.assertEquals(1, solutions.size());
+        Assert.assertEquals("Array,Hash Table", solutions.get(0).getTags());
+
+        String article = client.api().solutions().article("hash-map", context);
+
+        JSONObject articleRequest = JSONObject.parseObject(executor.lastRequest.getBody());
+        Assert.assertEquals("solutionDetailArticle", articleRequest.getString("operationName"));
+        Assert.assertEquals("hash-map",
+                articleRequest.getJSONObject("variables").getString("slug"));
+        Assert.assertEquals("article body", article);
     }
 
     @Test
@@ -611,6 +832,7 @@ public class LcApiTest {
 
     private static final class QueueExecutor implements ExecutorHttp {
         private final Queue<HttpResponse> responses = new ArrayDeque<>();
+        private final CookieStore cookieStore = new TestCookieStore();
         private HttpRequest lastRequest;
 
         void add(HttpResponse response) {
@@ -619,7 +841,7 @@ public class LcApiTest {
 
         @Override
         public CookieStore cookieStore() {
-            return new TestCookieStore();
+            return cookieStore;
         }
 
         @Override

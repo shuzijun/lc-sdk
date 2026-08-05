@@ -135,7 +135,11 @@ public class CommonCommand {
 
         @Override
         public Checkin execute(HttpClient client) throws LcException {
-            HttpResponse response = Graphql.builder(client.getGraphql()).operationName("checkin").header(client.getHeader()).request(client.getExecutorHttp());
+            HttpResponse response = Graphql.builder(client.getGraphql())
+                    .operationName("checkin")
+                    .header(client.getHeader())
+                    .addOption(getOptions())
+                    .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 return JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("checkin").to(Checkin.class);
             } else {

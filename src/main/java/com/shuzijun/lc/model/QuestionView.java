@@ -4,6 +4,7 @@ package com.shuzijun.lc.model;
 import com.alibaba.fastjson2.annotation.JSONField;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +43,28 @@ public class QuestionView {
         this.title = title;
     }
 
+    public QuestionView(QuestionView source) {
+        source.copyTo(this);
+    }
+
+    public QuestionView copy() {
+        return new QuestionView(this);
+    }
+
+    protected void copyTo(QuestionView target) {
+        target.title = title;
+        target.titleCn = titleCn;
+        target.questionId = questionId;
+        target.level = level;
+        target.status = status;
+        target.titleSlug = titleSlug;
+        target.frontendQuestionId = frontendQuestionId;
+        target.acceptance = acceptance;
+        target.frequency = frequency;
+        target.category = category;
+        target.paidOnly = paidOnly;
+        target.solutionNum = solutionNum;
+    }
 
     public String getTitle() {
         return title;
@@ -68,7 +91,7 @@ public class QuestionView {
     }
 
     public Integer getLevel() {
-        return level;
+        return level == null ? 0 : level;
     }
 
     @JSONField(name = "level")
@@ -127,15 +150,12 @@ public class QuestionView {
 
     @JSONField(name = "acceptance")
     public void setAcceptance(Double acceptance) {
-        this.acceptance = acceptance;
+        this.acceptance = normalizePercentage(acceptance);
     }
 
     @JSONField(name = "acRate")
     public void setAcRate(Double acceptance) {
-        if (acceptance != null && acceptance > 1) {
-            acceptance = acceptance / 100;
-        }
-        this.acceptance = acceptance;
+        this.acceptance = normalizePercentage(acceptance);
     }
 
     public Double getFrequency() {
@@ -144,15 +164,19 @@ public class QuestionView {
 
     @JSONField(name = "frequency")
     public void setFrequency(Double frequency) {
-        this.frequency = frequency;
+        this.frequency = normalizePercentage(frequency);
     }
 
     @JSONField(name = "freqBar")
     public void setFreqBar(Double frequency) {
-        if (frequency != null && frequency > 1) {
-            frequency = frequency / 100;
+        this.frequency = normalizePercentage(frequency);
+    }
+
+    private static Double normalizePercentage(Double value) {
+        if (value != null && value > 1) {
+            return value / 100;
         }
-        this.frequency = frequency;
+        return value;
     }
 
     public String getStatusSign() {
@@ -195,6 +219,11 @@ public class QuestionView {
         this.paidOnly = paidOnly;
     }
 
+    @JSONField(name = "isPaidOnly")
+    public void setIsPaidOnly(boolean paidOnly) {
+        this.paidOnly = paidOnly;
+    }
+
     public String getSolutionNum() {
         return solutionNum;
     }
@@ -203,13 +232,20 @@ public class QuestionView {
         this.solutionNum = solutionNum;
     }
 
-    private static Map<Character, Integer> SORT = new HashMap<>();
+    @Override
+    public String toString() {
+        return getStatusSign() + getFormTitle();
+    }
+
+    private static final Map<Character, Integer> SORT;
 
     static {
+        Map<Character, Integer> sortOrder = new HashMap<>();
         String sortStr = "剑面";
         for (int i = 0; i < sortStr.length(); i++) {
-            SORT.put(sortStr.charAt(i), i);
+            sortOrder.put(sortStr.charAt(i), i);
         }
+        SORT = Collections.unmodifiableMap(sortOrder);
     }
 
     public int frontendQuestionIdCompareTo(QuestionView questionView) {

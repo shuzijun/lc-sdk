@@ -153,4 +153,9 @@ public class Session {
     public void setHard(Integer hard) {
         this.hard = hard;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

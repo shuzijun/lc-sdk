@@ -13,10 +13,14 @@ public interface CookieStore {
         final List<HttpCookie> cookieList = new ArrayList<>();
         String[] cookies = cookie.split(";");
         for (String cookieString : cookies) {
-            String[] cookieNameValue = cookieString.trim().split("=");
-            if (cookieNameValue.length >= 2) {
+            String cookieNameValue = cookieString.trim();
+            int separator = cookieNameValue.indexOf('=');
+            if (separator > 0) {
                 try {
-                    HttpCookie basicClientCookie = new HttpCookie(cookieNameValue[0], cookieNameValue[1]);
+                    HttpCookie basicClientCookie = new HttpCookie(
+                            cookieNameValue.substring(0, separator),
+                            cookieNameValue.substring(separator + 1)
+                    );
                     basicClientCookie.setDomain(domain);
                     basicClientCookie.setPath("/");
                     cookieList.add(basicClientCookie);

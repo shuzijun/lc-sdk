@@ -53,6 +53,26 @@ public class Question extends QuestionView {
 
     }
 
+    public Question(Question source) {
+        super(source);
+        testCase = source.testCase;
+        exampleTestcases = source.exampleTestcases;
+        content = source.content;
+        translatedContent = source.translatedContent;
+        codeSnippets = source.codeSnippets;
+        topicTags = source.topicTags;
+        likes = source.likes;
+        dislikes = source.dislikes;
+        solution = source.solution;
+        similarQuestions = source.similarQuestions;
+        hints = source.hints;
+        metaData = source.metaData;
+    }
+
+    @Override
+    public Question copy() {
+        return new Question(this);
+    }
 
     public String getTestCase() {
         return testCase;
