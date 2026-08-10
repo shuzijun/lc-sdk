@@ -1,27 +1,19 @@
-query questionSolutionArticles($questionSlug: String!, $skip: Int, $first: Int, $orderBy: SolutionArticleOrderBy, $userInput: String, $tagSlugs: [String!]) {
-    questionSolutionArticles(questionSlug: $questionSlug, skip: $skip, first: $first, orderBy: $orderBy, userInput: $userInput, tagSlugs: $tagSlugs) {
+query ugcArticleSolutionArticles($questionSlug: String!, $orderBy: ArticleOrderByEnum, $userInput: String, $tagSlugs: [String!], $skip: Int, $first: Int) {
+    ugcArticleSolutionArticles(questionSlug: $questionSlug, orderBy: $orderBy, userInput: $userInput, tagSlugs: $tagSlugs, skip: $skip, first: $first) {
         totalNum
+        pageInfo {
+            hasNextPage
+        }
         edges {
             node {
-                ...solutionArticle
-                __typename
+                title
+                slug
+                summary
+                topicId
+                tags {
+                    name
+                }
             }
-            __typename
         }
-        __typename
     }
-}
-
-fragment solutionArticle on SolutionArticleNode {
-    uuid
-    title
-    slug
-    status
-    identifier
-    tags {
-        name
-    }
-    summary
-    hitCount
-    __typename
 }

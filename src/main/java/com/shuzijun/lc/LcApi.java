@@ -16,6 +16,8 @@ import com.shuzijun.lc.model.FavoriteResult;
 import com.shuzijun.lc.model.Checkin;
 import com.shuzijun.lc.model.CodeExecutionResult;
 import com.shuzijun.lc.model.CodeStartResult;
+import com.shuzijun.lc.model.CommonNotePage;
+import com.shuzijun.lc.model.CommonNoteResult;
 import com.shuzijun.lc.model.NoteUpdateResult;
 import com.shuzijun.lc.model.PageInfo;
 import com.shuzijun.lc.model.ProblemSetParam;
@@ -238,6 +240,55 @@ public final class LcApi {
         ) throws LcException {
             return client.invoker(
                     NoteCommand.buildUpdateNoteResult(titleSlug, content, context(context))
+            );
+        }
+
+        public CommonNotePage list(
+                String targetId,
+                int limit,
+                int skip,
+                RequestContext context
+        ) throws LcException {
+            return client.invoker(
+                    NoteCommand.buildCommonNoteList(targetId, limit, skip, context(context))
+            );
+        }
+
+        public CommonNoteResult create(
+                String targetId,
+                String content,
+                String summary,
+                RequestContext context
+        ) throws LcException {
+            return client.invoker(
+                    NoteCommand.buildCreateCommonNote(
+                            targetId,
+                            content,
+                            summary,
+                            context(context)
+                    )
+            );
+        }
+
+        public CommonNoteResult updateCommon(
+                String noteId,
+                String content,
+                String summary,
+                RequestContext context
+        ) throws LcException {
+            return client.invoker(
+                    NoteCommand.buildUpdateCommonNote(
+                            noteId,
+                            content,
+                            summary,
+                            context(context)
+                    )
+            );
+        }
+
+        public boolean delete(String noteId, RequestContext context) throws LcException {
+            return client.invoker(
+                    NoteCommand.buildDeleteCommonNote(noteId, context(context))
             );
         }
     }

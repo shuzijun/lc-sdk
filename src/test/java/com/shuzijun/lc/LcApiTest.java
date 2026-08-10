@@ -11,6 +11,8 @@ import com.shuzijun.lc.model.PageInfo;
 import com.shuzijun.lc.model.Checkin;
 import com.shuzijun.lc.model.CodeExecutionResult;
 import com.shuzijun.lc.model.CodeStartResult;
+import com.shuzijun.lc.model.CommonNotePage;
+import com.shuzijun.lc.model.CommonNoteResult;
 import com.shuzijun.lc.model.FavoriteResult;
 import com.shuzijun.lc.model.NoteUpdateResult;
 import com.shuzijun.lc.model.ProblemSetParam;
@@ -60,6 +62,69 @@ public class LcApiTest {
         Assert.assertEquals("note rejected", failure.getError());
         Assert.assertEquals("server note", failure.getNote());
         Assert.assertTrue(executor.lastRequest.getBody().contains("\"content\":\"rejected\""));
+    }
+
+    @Test
+    public void testNotes_cnCommonNoteCrudMapsListAndMutations() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"noteOneTargetCommonNote\":{\"count\":2,\"userNotes\":["
+                        + "{\"id\":\"new-note\",\"content\":\"new content\","
+                        + "\"summary\":\"new\",\"targetId\":\"2\","
+                        + "\"noteType\":\"COMMON_QUESTION\",\"status\":\"NORMAL\"},"
+                        + "{\"id\":\"old-note\",\"content\":\"old content\","
+                        + "\"summary\":\"old\",\"targetId\":\"2\","
+                        + "\"noteType\":\"COMMON_QUESTION\",\"status\":\"NORMAL\"}]}}}"));
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"noteCreateCommonNote\":{\"ok\":true,\"note\":{"
+                        + "\"id\":\"created-note\",\"content\":\"created\","
+                        + "\"summary\":\"created\",\"targetId\":\"2\","
+                        + "\"noteType\":\"COMMON_QUESTION\"}}}}"));
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"noteUpdateUserNote\":{\"ok\":true,\"note\":{"
+                        + "\"id\":\"created-note\",\"content\":\"updated\","
+                        + "\"summary\":\"updated\",\"targetId\":\"2\","
+                        + "\"noteType\":\"COMMON_QUESTION\"}}}}"));
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"noteDeleteUserNote\":{\"ok\":true}}}"));
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+
+        CommonNotePage page = client.api().notes().list("2", 10, 0, RequestContext.DEFAULT);
+
+        Assert.assertEquals(2, page.getCount());
+        Assert.assertEquals(2, page.getNotes().size());
+        Assert.assertEquals("new-note", page.getNotes().get(0).getId());
+        JSONObject listBody = JSONObject.parseObject(executor.lastRequest.getBody());
+        Assert.assertEquals("noteOneTargetCommonNote", listBody.getString("operationName"));
+        Assert.assertEquals(
+                "COMMON_QUESTION",
+                listBody.getJSONObject("variables").getString("noteType")
+        );
+        Assert.assertEquals("2", listBody.getJSONObject("variables").getString("targetId"));
+
+        CommonNoteResult created = client.api().notes()
+                .create("2", "created", "created", RequestContext.DEFAULT);
+        Assert.assertTrue(created.isSuccess());
+        Assert.assertEquals("created-note", created.getNote().getId());
+        Assert.assertEquals(
+                "noteCreateCommonNote",
+                JSONObject.parseObject(executor.lastRequest.getBody()).getString("operationName")
+        );
+
+        CommonNoteResult updated = client.api().notes()
+                .updateCommon("created-note", "updated", "updated", RequestContext.DEFAULT);
+        Assert.assertTrue(updated.isSuccess());
+        Assert.assertEquals("updated", updated.getNote().getContent());
+        Assert.assertEquals(
+                "noteUpdateUserNote",
+                JSONObject.parseObject(executor.lastRequest.getBody()).getString("operationName")
+        );
+
+        Assert.assertTrue(client.api().notes().delete("created-note", RequestContext.DEFAULT));
+        Assert.assertEquals(
+                "noteDeleteUserNote",
+                JSONObject.parseObject(executor.lastRequest.getBody()).getString("operationName")
+        );
     }
 
     @Test
@@ -498,7 +563,7 @@ public class LcApiTest {
     }
 
     @Test
-    public void testSolutions_pagedListAndArticlePreserveRequestContract() throws LcException {
+    public void testSolutions_cnPagedListAndArticlePreserveRequestContract() throws LcException {
         QueueExecutor executor = new QueueExecutor();
         executor.add(new HttpResponse(200,
                 "{\"data\":{\"questionSolutionArticles\":{\"edges\":[{\"node\":{"
@@ -531,6 +596,70 @@ public class LcApiTest {
         Assert.assertEquals("hash-map",
                 articleRequest.getJSONObject("variables").getString("slug"));
         Assert.assertEquals("article body", article);
+    }
+
+    @Test
+    public void testSolutions_comUsesUgcListAndTopicArticleContract() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"ugcArticleSolutionArticles\":{\"totalNum\":3000,"
+                        + "\"pageInfo\":{\"hasNextPage\":true},\"edges\":[{\"node\":{"
+                        + "\"title\":\"One Pass\",\"slug\":\"one-pass\",\"topicId\":127810,"
+                        + "\"summary\":\"Use a map\","
+                        + "\"tags\":[{\"name\":\"Array\"},{\"name\":\"Hash Table\"}]}}]}}}"));
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"ugcArticleSolutionArticle\":{"
+                        + "\"topicId\":127810,\"content\":\"ugc article body\"}}}"));
+        LcClient client = client(HttpClient.SiteEnum.EN, executor);
+
+        List<Solution> solutions = client.api().solutions()
+                .list("two-sum", 30, 60, RequestContext.DEFAULT);
+
+        JSONObject listRequest = JSONObject.parseObject(executor.lastRequest.getBody());
+        JSONObject listVariables = listRequest.getJSONObject("variables");
+        Assert.assertEquals("ugcArticleSolutionArticles", listRequest.getString("operationName"));
+        Assert.assertTrue(listRequest.getString("query").contains("ugcArticleSolutionArticles"));
+        Assert.assertEquals("two-sum", listVariables.getString("questionSlug"));
+        Assert.assertEquals(30, listVariables.getIntValue("first"));
+        Assert.assertEquals(60, listVariables.getIntValue("skip"));
+        Assert.assertEquals("HOT", listVariables.getString("orderBy"));
+        Assert.assertEquals(1, solutions.size());
+        Assert.assertEquals("one-pass", solutions.get(0).getSlug());
+        Assert.assertEquals("127810", solutions.get(0).getTopicId());
+        Assert.assertEquals("Array,Hash Table", solutions.get(0).getTags());
+
+        String article = client.api().solutions().article(
+                solutions.get(0).getTopicId(),
+                RequestContext.DEFAULT
+        );
+
+        JSONObject articleRequest = JSONObject.parseObject(executor.lastRequest.getBody());
+        Assert.assertEquals("ugcArticleSolutionArticle",
+                articleRequest.getString("operationName"));
+        Assert.assertTrue(articleRequest.getString("query")
+                .contains("ugcArticleSolutionArticle"));
+        Assert.assertEquals("127810",
+                articleRequest.getJSONObject("variables").getString("topicId"));
+        Assert.assertEquals("ugc article body", article);
+    }
+
+    @Test
+    public void testSolutions_cnArticleFallsBackToSlateValue() throws LcException {
+        QueueExecutor executor = new QueueExecutor();
+        executor.add(new HttpResponse(200,
+                "{\"data\":{\"solutionArticle\":{\"content\":\"\",\"slateValue\":"
+                        + "\"[{\\\"type\\\":\\\"Paragraph\\\",\\\"children\\\":["
+                        + "{\\\"text\\\":\\\"Slate article\\\"}]}]\"}}}"));
+        LcClient client = client(HttpClient.SiteEnum.CN, executor);
+
+        String article = client.api().solutions().article(
+                "slate-article",
+                RequestContext.DEFAULT
+        );
+
+        JSONObject request = JSONObject.parseObject(executor.lastRequest.getBody());
+        Assert.assertTrue(request.getString("query").contains("slateValue"));
+        Assert.assertEquals("Slate article", article);
     }
 
     @Test

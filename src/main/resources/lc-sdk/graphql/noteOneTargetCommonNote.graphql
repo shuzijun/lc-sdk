@@ -1,0 +1,15 @@
+query noteOneTargetCommonNote($noteType: NoteCommonTypeEnum!, $targetId: String!, $limit: Int = 10, $skip: Int = 0) {
+  noteOneTargetCommonNote(noteType: $noteType, targetId: $targetId, limit: $limit, skip: $skip) {
+    count
+    userNotes {
+      config
+      content
+      id
+      noteType
+      status
+      summary
+      targetId
+      updatedAt
+    }
+  }
+}

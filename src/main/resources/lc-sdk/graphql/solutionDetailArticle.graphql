@@ -1,7 +1,5 @@
-query solutionDetailArticle($titleSlug: String!) {
-    solutionArticle: question(titleSlug: $titleSlug) {
-        solution {
-            content
-        }
+query ugcArticleSolutionArticle($topicId: ID) {
+    ugcArticleSolutionArticle(topicId: $topicId) {
+        content
     }
 }

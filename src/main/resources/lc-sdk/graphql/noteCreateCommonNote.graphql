@@ -1,0 +1,13 @@
+mutation noteCreateCommonNote($content: String!, $noteType: NoteCommonTypeEnum!, $targetId: String!, $summary: String!) {
+  noteCreateCommonNote(content: $content, noteType: $noteType, targetId: $targetId, summary: $summary) {
+    note {
+      config
+      content
+      id
+      noteType
+      targetId
+      updatedAt
+    }
+    ok
+  }
+}

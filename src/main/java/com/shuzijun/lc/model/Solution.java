@@ -14,6 +14,10 @@ public class Solution {
      */
     private String slug;
     /**
+     * 国际站题解详情请求标识
+     */
+    private String topicId;
+    /**
      * 标签
      */
     private String tags;
@@ -36,6 +40,14 @@ public class Solution {
 
     public void setSlug(String slug) {
         this.slug = slug;
+    }
+
+    public String getTopicId() {
+        return topicId;
+    }
+
+    public void setTopicId(String topicId) {
+        this.topicId = topicId;
     }
 
     public String getTags() {

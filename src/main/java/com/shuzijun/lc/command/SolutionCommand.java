@@ -41,13 +41,13 @@ public class SolutionCommand {
     /**
      * 构建获取题解详情
      *
-     * @param articleSlug 题解slug <br>
-     *                    leetcode.com articleSlug为{@link  QuestionView#getTitleSlug()}<br>
-     *                    leetcode.cn articleSlug为{@link  Solution#getSlug()}<br>
+     * @param articleId 题解请求标识 <br>
+     *                  leetcode.com 使用{@link Solution#getTopicId()}<br>
+     *                  leetcode.cn 使用{@link Solution#getSlug()}<br>
      * @return {@link String} 题解详情
      */
-    public static SolutionArticle buildSolutionArticle(String articleSlug,Option<?> ...option) {
-        return new SolutionArticle(articleSlug,option);
+    public static SolutionArticle buildSolutionArticle(String articleId,Option<?> ...option) {
+        return new SolutionArticle(articleId,option);
     }
 
 
@@ -66,24 +66,40 @@ public class SolutionCommand {
 
         @Override
         public List<Solution> execute(HttpClient client) throws LcException {
-            if (!client.isCn()) {
-                return null;
-            }
+            String operationName = client.isCn()
+                    ? "questionSolutionArticles"
+                    : "ugcArticleSolutionArticles";
             HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
-                    .operationName("questionSolutionArticles")
+                    .operationName("questionSolutionArticles", operationName)
                     .variables("questionSlug", titleSlug)
-                    .variables("first", first).variables("skip", skip).variables("orderBy", "DEFAULT")
+                    .variables("first", first)
+                    .variables("skip", skip)
+                    .variables("orderBy", client.isCn() ? "DEFAULT" : "HOT")
+                    .variables("userInput", "")
+                    .variables("tagSlugs", new ArrayList<>())
                     .addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
                 List<Solution> solutionList = new ArrayList<>();
-
-                JSONArray edges = JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("questionSolutionArticles").getJSONArray("edges");
+                JSONObject data = JSONObject.parseObject(response.getBody()).getJSONObject("data");
+                JSONObject articles = data == null ? null : data.getJSONObject(operationName);
+                JSONArray edges = articles == null ? null : articles.getJSONArray("edges");
+                if (edges == null) {
+                    throw new LcException("SolutionList response is empty",
+                            HttpClient.buildHttpTrace(response.getHttpRequest(), response));
+                }
                 for (int i = 0; i < edges.size(); i++) {
                     JSONObject node = edges.getJSONObject(i).getJSONObject("node");
+                    if (node == null) {
+                        continue;
+                    }
                     Solution solution = node.toJavaObject(Solution.class);
                     JSONArray tagArray = node.getJSONArray("tags");
-                    String tags = tagArray.stream().map(tag -> JSONObject.from(tag).getString("name")).collect(Collectors.joining(","));
+                    String tags = tagArray == null
+                            ? ""
+                            : tagArray.stream()
+                            .map(tag -> JSONObject.from(tag).getString("name"))
+                            .collect(Collectors.joining(","));
                     solution.setTags(tags);
                     solutionList.add(solution);
                 }
@@ -97,29 +113,51 @@ public class SolutionCommand {
 
     public static class SolutionArticle extends OptionCommand implements Command<String> {
 
-        private final String articleSlug;
+        private final String articleId;
 
-        public SolutionArticle(String articleSlug,Option<?> ...option) {
+        public SolutionArticle(String articleId,Option<?> ...option) {
             super(option);
-            this.articleSlug = articleSlug;
+            this.articleId = articleId;
         }
 
         @Override
         public String execute(HttpClient client) throws LcException {
-            HttpResponse response = Graphql.builder(client.getGraphql()).cn(client.isCn()).header(client.getHeader())
-                    .operationName("solutionDetailArticle")
-                    .variables("slug", articleSlug)
-                    .variables("titleSlug", articleSlug)
-                    .variables("orderBy", "DEFAULT")
-                    .addOption(getOptions())
+            String operationName = client.isCn()
+                    ? "solutionDetailArticle"
+                    : "ugcArticleSolutionArticle";
+            Graphql.GraphqlBuilder request = Graphql.builder(client.getGraphql())
+                    .cn(client.isCn())
+                    .header(client.getHeader())
+                    .operationName("solutionDetailArticle", operationName);
+            if (client.isCn()) {
+                request.variables("slug", articleId)
+                        .variables("orderBy", "DEFAULT");
+            } else {
+                request.variables("topicId", articleId);
+            }
+            HttpResponse response = request.addOption(getOptions())
                     .request(client.getExecutorHttp());
             if (response.isCodeSuccess() && StringUtils.isNotBlank(response.getBody())) {
-                JSONObject solutionArticleObject = JSONObject.parseObject(response.getBody()).getJSONObject("data").getJSONObject("solutionArticle");
+                JSONObject data = JSONObject.parseObject(response.getBody()).getJSONObject("data");
+                JSONObject solutionArticleObject = data == null
+                        ? null
+                        : data.getJSONObject(client.isCn()
+                        ? "solutionArticle"
+                        : "ugcArticleSolutionArticle");
+                if (solutionArticleObject == null) {
+                    throw new LcException("SolutionArticle response is empty",
+                            HttpClient.buildHttpTrace(response.getHttpRequest(), response));
+                }
                 String content;
                 if (client.isCn()) {
                     content = solutionArticleObject.getString("content");
+                    if (StringUtils.isBlank(content)) {
+                        content = SlateMarkdownConverter.convert(
+                                solutionArticleObject.getString("slateValue")
+                        );
+                    }
                 } else {
-                    content = solutionArticleObject.getJSONObject("solution").getString("content");
+                    content = solutionArticleObject.getString("content");
                 }
                 if (StringUtils.isBlank(content)) {
                     return null;
