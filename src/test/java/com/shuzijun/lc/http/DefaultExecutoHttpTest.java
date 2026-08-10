@@ -9,9 +9,9 @@ public class DefaultExecutoHttpTest {
     @Test
     public void testNewDefaultHttpClientUsesPlatformTlsVerification() {
         OkHttpClient client = new DefaultExecutoHttp().newDefaultHttpClient(1, 1, 1);
+        OkHttpClient defaultClient = new OkHttpClient();
 
-        Assert.assertEquals(
-                "okhttp3.internal.tls.OkHostnameVerifier",
-                client.hostnameVerifier().getClass().getName());
+        Assert.assertSame(defaultClient.hostnameVerifier(), client.hostnameVerifier());
+        Assert.assertEquals(defaultClient.connectionSpecs(), client.connectionSpecs());
     }
 }
