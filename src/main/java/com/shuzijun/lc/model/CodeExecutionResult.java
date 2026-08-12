@@ -61,6 +61,7 @@ public final class CodeExecutionResult {
                 .codeOutputs(result.getCodeOutputs())
                 .expectedCodeAnswers(result.getExpectedCodeAnswers())
                 .statusMessage(result.getStatusMsg())
+                .fullCompileError(result.getFullCompileError())
                 .fullRuntimeError(result.getFullRuntimeError())
                 .build();
     }

@@ -12,10 +12,14 @@ public class RunCodeCheckResult {
     private List<String> codeAnswers;
     @JSONField(name = "code_output")
     private List<String> codeOutputs;
+    @JSONField(name = "compile_error")
+    private String compileError;
     @JSONField(name = "elapsed_time")
     private String elapsedTime;
     @JSONField(name = "fast_submit")
     private String fastSubmit;
+    @JSONField(name = "full_compile_error")
+    private String fullCompileError;
     @JSONField(name = "full_runtime_error")
     private String fullRuntimeError;
     private String lang;
@@ -120,6 +124,14 @@ public class RunCodeCheckResult {
         this.codeOutputs = codeOutputs;
     }
 
+    public String getCompileError() {
+        return compileError;
+    }
+
+    public void setCompileError(String compileError) {
+        this.compileError = compileError;
+    }
+
     public String getElapsedTime() {
         return elapsedTime;
     }
@@ -134,6 +146,14 @@ public class RunCodeCheckResult {
 
     public void setFastSubmit(String fastSubmit) {
         this.fastSubmit = fastSubmit;
+    }
+
+    public String getFullCompileError() {
+        return fullCompileError;
+    }
+
+    public void setFullCompileError(String fullCompileError) {
+        this.fullCompileError = fullCompileError;
     }
 
     public String getFullRuntimeError() {

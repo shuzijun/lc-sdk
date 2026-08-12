@@ -431,10 +431,11 @@ public class LcApiTest {
     public void testCode_checkRunAndSubmitReturnUnifiedResults() throws LcException {
         QueueExecutor executor = new QueueExecutor();
         executor.add(new HttpResponse(200,
-                "{\"state\":\"SUCCESS\",\"run_success\":true,"
-                        + "\"code_answer\":[\"[0,1]\"],\"code_output\":[\"stdout\"],"
-                        + "\"expected_code_answer\":[\"[0,1]\"],"
-                        + "\"status_msg\":\"Accepted\",\"full_runtime_error\":null}"));
+                "{\"state\":\"SUCCESS\",\"run_success\":false,"
+                        + "\"code_answer\":[],\"code_output\":[],"
+                        + "\"expected_code_answer\":[],\"status_msg\":\"Compile Error\","
+                        + "\"compile_error\":\"return value is missing\","
+                        + "\"full_compile_error\":\"Line 15: missing return\\n1 error generated.\"}"));
         executor.add(new HttpResponse(200,
                 "{\"state\":\"SUCCESS\",\"run_success\":true,\"status_code\":10,"
                         + "\"status_runtime\":\"1 ms\",\"runtime_percentile\":50.25,"
@@ -450,11 +451,15 @@ public class LcApiTest {
                 .checkSubmit("submit-1", RequestContext.DEFAULT);
 
         Assert.assertTrue(run.isComplete());
-        Assert.assertTrue(run.isRunSuccess());
-        Assert.assertEquals("[0,1]", run.getCodeAnswers().get(0));
-        Assert.assertEquals("stdout", run.getCodeOutputs().get(0));
-        Assert.assertEquals("[0,1]", run.getExpectedCodeAnswers().get(0));
-        Assert.assertEquals("Accepted", run.getStatusMessage());
+        Assert.assertFalse(run.isRunSuccess());
+        Assert.assertTrue(run.getCodeAnswers().isEmpty());
+        Assert.assertTrue(run.getCodeOutputs().isEmpty());
+        Assert.assertTrue(run.getExpectedCodeAnswers().isEmpty());
+        Assert.assertEquals("Compile Error", run.getStatusMessage());
+        Assert.assertEquals(
+                "Line 15: missing return\n1 error generated.",
+                run.getFullCompileError()
+        );
 
         Assert.assertTrue(submit.isComplete());
         Assert.assertTrue(submit.isRunSuccess());
